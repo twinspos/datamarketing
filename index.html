@@ -818,13 +818,13 @@ function copyRep(){
 // ==== Performa bulanan ====
 const BLN={jan:1,feb:2,mar:3,apr:4,mei:5,may:5,jun:6,jul:7,agu:8,agt:8,aug:8,sep:9,okt:10,oct:10,nov:11,des:12,dec:12};
 const BLNN=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
-function ymOf(v){
+function ymOf(v,mdy){
  v=String(v||'').trim().toLowerCase();if(!v)return '';
  const now=new Date(),cy=now.getFullYear(),cm=now.getMonth()+1;
  const fixY=(y,m)=>{if(!y){y=cy;if(m>cm)y--}else if(y<100)y+=2000;return (m>=1&&m<=12&&y>2000&&y<2100)?y+'-'+String(m).padStart(2,'0'):''};
  let m;
  if(m=v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))return fixY(+m[1],+m[2]);
- if(m=v.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})$/))return fixY(+m[3],+m[2]);
+ if(m=v.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})$/)){let a=+m[1],b=+m[2];if(a>12)mdy=false;else if(b>12)mdy=true;return fixY(+m[3],mdy?a:b)}
  if(m=v.match(/^(\d{1,2})[\s\/.-]+([a-z]{3,})\.?[\s\/.-]*(\d{2,4})?/)){const b=BLN[m[2].slice(0,3)];if(b)return fixY(m[3]?+m[3]:0,b)}
  if(m=v.match(/^([a-z]{3,})\s*(\d{4})?$/)){const b=BLN[m[1].slice(0,3)];if(b)return fixY(m[2]?+m[2]:0,b)}
  return '';
@@ -846,9 +846,17 @@ function perfCount(metric){
  const v={},add=(n,ym)=>{if(!ym)return;const k=n.toLowerCase();v[k]=v[k]||{};v[k][ym]=(v[k][ym]||0)+1};
  if(metric==='todo'){
   DATA.forEach(x=>{const m=x.name.match(/^(\S+)\s+to do list/i);if(!m)return;const j=x.cols.findIndex(c=>/^(tanggal|date|tgl)\b/i.test(c.trim()));if(j<0)return;
-   x.rows.forEach(r=>add(m[1],ymOf(r[j])))});
+   x.rows.forEach(r=>add(m[1],ymOf(r[j],dateOrder(x,j))))});
  }else AKT.forEach(a=>{if(metric==='all'||a.jenis===metric||(metric==='fu'&&['call','email','wa'].includes(a.jenis)))add(a.nama,(a.tgl||'').slice(0,7))});
  return v;
+}
+// Deteksi format angka tanggal (hari/bulan atau bulan/hari) per kolom; bila tidak ada bukti, pakai kebiasaan seluruh spreadsheet
+let _mdyG=null;
+function evid(vals){let d=0,u=0;vals.forEach(v=>{const m=String(v||'').trim().match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})$/);if(!m)return;if(+m[1]>12)d++;else if(+m[2]>12)u++});return {d,u}}
+function dateOrder(x,j){
+ const e=evid(x.rows.map(r=>r[j]));if(e.u>e.d)return true;if(e.d>e.u)return false;
+ if(_mdyG===null){let D=0,U=0;DATA.forEach(s=>s.cols.forEach((c,k)=>{if(/tanggal|date|tgl/i.test(c)){const q=evid(s.rows.map(r=>r[k]));D+=q.d;U+=q.u}}));_mdyG=U>D}
+ return _mdyG;
 }
 function noDateSheets(){return DATA.filter(x=>/to do list/i.test(x.name)&&x.cols.findIndex(c=>/^(tanggal|date|tgl)\b/i.test(c.trim()))<0).map(x=>x.name.split(' ')[0])}
 function drawPerf(){
@@ -1048,7 +1056,7 @@ async function loadLive(keep){
   const nd=d.sheets.map(s=>processSheet(s.name,s.values,s.merges)).filter(Boolean);
   if(!nd.length)throw new Error('sheet kosong');
   const curName=cur>=0&&DATA[cur]?DATA[cur].name:null;
-  DATA=nd;LOG=Array.isArray(d.log)?d.log:[];LAP=Array.isArray(d.lap)?d.lap:[];AKT=Array.isArray(d.akt)?d.akt:[];TIMN=Array.isArray(d.tim)?d.tim:[];
+  DATA=nd;_mdyG=null;LOG=Array.isArray(d.log)?d.log:[];LAP=Array.isArray(d.lap)?d.lap:[];AKT=Array.isArray(d.akt)?d.akt:[];TIMN=Array.isArray(d.tim)?d.tim:[];
   const t=new Date(d.updated||Date.now());
   setStat('ok','Live · '+t.toLocaleTimeString('id',{hour:'2-digit',minute:'2-digit'}));
   const ni=curName?DATA.findIndex(s=>s.name===curName):-1;
