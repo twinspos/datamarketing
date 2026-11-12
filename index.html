@@ -275,6 +275,24 @@ tr:hover{background:#f1f5ff}
 .adet details{background:#fff;border:1px solid #e8ebf2;border-radius:12px;margin-bottom:8px;padding:10px 14px}
 .adet summary{cursor:pointer;font-weight:700;font-size:13.5px}
 .adet .ar{display:flex;gap:10px;align-items:center;font-size:12.5px;padding:6px 0;border-bottom:1px dashed #edf0f5}
+.pctl{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px}
+.pctl label{display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--mut);font-weight:600}
+.pctl input,.pctl select{padding:7px 10px}
+.ptab{display:inline-flex;background:#f1f4f9;border-radius:10px;padding:3px;gap:2px}
+.ptab button{background:none!important;border:0;color:var(--mut);box-shadow:none;padding:6px 12px;border-radius:8px;font-size:12.5px}
+.ptab button.on{background:#fff!important;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.pm{width:100%;border-collapse:collapse;min-width:0}
+.pm th{position:static;background:#f7f9fc;text-align:center;cursor:default}
+.pm th:first-child,.pm td:first-child{text-align:left}
+.pm td{text-align:center;font-variant-numeric:tabular-nums;position:relative}
+.pm td .hb{position:absolute;inset:3px;border-radius:6px;z-index:0}
+.pm td span{position:relative;z-index:1}
+.pm tr.tot td{font-weight:800;background:#f7f9fc}
+.dl{font-size:11px;font-weight:700;margin-left:4px}.dl.up{color:#059669}.dl.dn{color:#dc2626}.dl.eq{color:#94a3b8}
+.cmpg{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.cmpc{border:1px solid #e8ebf2;border-radius:12px;padding:12px 14px;display:flex;gap:10px;align-items:center}
+.cmpc .v{font-size:20px;font-weight:800}.cmpc .s{font-size:11.5px;color:var(--mut)}
+.leg{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;margin-top:6px}.leg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
 .whochip{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;background:#f1f5ff;border:1px solid #dbe5ff;color:#1d3b7a;padding:3px 4px 3px 10px;border-radius:20px}
 .whochip button{padding:4px 10px;font-size:11.5px;border-radius:14px}
 </style>
@@ -548,6 +566,7 @@ function overview(){
  <div class="kpi"><div class="v">${emails.size.toLocaleString('id')}</div><div class="l">Alamat email unik</div></div>
  <div class="kpi"><div class="v">${todo.reduce((a,s)=>a+s.rows.length,0)}</div><div class="l">Baris di to-do list sales</div></div></div>`;
  const mx=Math.max(...todo.map(s=>s.rows.length));
+ h+=`<div class="box" id="perf" style="margin-bottom:16px"></div>`;
  h+=`<div class="two"><div class="box"><div class="sec" style="margin-top:0">Aktivitas To-do List per Sales</div><div class="bars">`+
  todo.map(s=>`<div class="row"><span class="lab">${esc(pretty(s.name))}</span><div class="bar" style="width:${s.rows.length/mx*60}%"></div><span class="num">${s.rows.length}</span></div>`).join('')+`</div></div>`;
  // segmentasi across INDONESIA-type sheets
@@ -560,7 +579,7 @@ function overview(){
   if(!items.length)continue;
   h+=`<div class="sec">${g}</div><div class="cards">`+items.map(([s,i])=>`<div class="card" onclick="show(${i})">${navIcon(s.name)}<div><b>${esc(pretty(s.name))}</b><span>${s.rows.length} baris · ${s.cols.length} kolom${s.note?' · '+esc(s.note.replace(/^last updated/i,'update'))+'':''}</span></div></div>`).join('')+`</div>`;
  }
- $('content').innerHTML=h;
+ $('content').innerHTML=h;drawPerf();
 }
 function show(i){
  cur=i;sortC=-1;fil={};$('q').value='';$('q').placeholder='Cari di sheet ini…';lf.q='';$('gq').value='';$('side').classList.remove('show');
@@ -795,6 +814,89 @@ function copyRep(){
  t+=LK.map(([k,l])=>`${l}: ${D.tot[k]}`).join('\n')+`\n*Total Follow-up: ${D.fu}*\n\n`;
  t+=D.rows.map(x=>x.r?`• ${x.nama}: Call ${x.r.call}, Email ${x.r.email}, WA ${x.r.wa}, Lead ${x.r.lead}${x.r.ket?' — '+x.r.ket:''}`:`• ${x.nama}: (belum ada aktivitas)`).join('\n');
  navigator.clipboard.writeText(t).then(()=>toast('✔ Teks laporan disalin — tinggal paste di WhatsApp'),()=>toast('Gagal menyalin'));
+}
+// ==== Performa bulanan ====
+const BLN={jan:1,feb:2,mar:3,apr:4,mei:5,may:5,jun:6,jul:7,agu:8,agt:8,aug:8,sep:9,okt:10,oct:10,nov:11,des:12,dec:12};
+const BLNN=['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+function ymOf(v){
+ v=String(v||'').trim().toLowerCase();if(!v)return '';
+ const now=new Date(),cy=now.getFullYear(),cm=now.getMonth()+1;
+ const fixY=(y,m)=>{if(!y){y=cy;if(m>cm)y--}else if(y<100)y+=2000;return (m>=1&&m<=12&&y>2000&&y<2100)?y+'-'+String(m).padStart(2,'0'):''};
+ let m;
+ if(m=v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))return fixY(+m[1],+m[2]);
+ if(m=v.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})$/))return fixY(+m[3],+m[2]);
+ if(m=v.match(/^(\d{1,2})[\s\/.-]+([a-z]{3,})\.?[\s\/.-]*(\d{2,4})?/)){const b=BLN[m[2].slice(0,3)];if(b)return fixY(m[3]?+m[3]:0,b)}
+ if(m=v.match(/^([a-z]{3,})\s*(\d{4})?$/)){const b=BLN[m[1].slice(0,3)];if(b)return fixY(m[2]?+m[2]:0,b)}
+ return '';
+}
+const ymNow=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')};
+const ymAdd=(ym,n)=>{let [y,m]=ym.split('-').map(Number);m+=n;while(m<1){m+=12;y--}while(m>12){m-=12;y++}return y+'-'+String(m).padStart(2,'0')};
+const ymLbl=ym=>{const [y,m]=ym.split('-');return BLNN[+m-1]+' '+y.slice(2)};
+const PCOL=['#2563eb','#f59e0b','#dc2626','#059669','#7c3aed','#0891b2','#db2777','#65a30d','#ea580c','#475569'];
+const PM=[['todo','Customer di to-do list'],['fu','Total follow-up (Call+Email+WA)'],['all','Semua aktivitas ⚡'],['call','Call'],['email','Email'],['wa','WhatsApp'],['lead','New Lead'],['kontak','New Kontak'],['baru','Data Baru']];
+let PF={metric:'',from:'',to:'',a:'',b:'',view:'tabel'};
+function salesList(){
+ const s=new Set();
+ DATA.forEach(x=>{const m=x.name.match(/^(\S+)\s+to do list/i);if(m)s.add(m[1].charAt(0).toUpperCase()+m[1].slice(1).toLowerCase())});
+ TIMN.forEach(n=>{if(![...s].some(x=>x.toLowerCase()===n.toLowerCase()))s.add(n)});
+ AKT.forEach(a=>{if(![...s].some(x=>x.toLowerCase()===a.nama.toLowerCase())&&!(a.nama.toLowerCase()===AUTH.u.toLowerCase()&&AUTH.role==='Admin'))s.add(a.nama)});
+ return [...s];
+}
+function perfCount(metric){
+ const v={},add=(n,ym)=>{if(!ym)return;const k=n.toLowerCase();v[k]=v[k]||{};v[k][ym]=(v[k][ym]||0)+1};
+ if(metric==='todo'){
+  DATA.forEach(x=>{const m=x.name.match(/^(\S+)\s+to do list/i);if(!m)return;const j=x.cols.findIndex(c=>/^(tanggal|date|tgl)\b/i.test(c.trim()));if(j<0)return;
+   x.rows.forEach(r=>add(m[1],ymOf(r[j])))});
+ }else AKT.forEach(a=>{if(metric==='all'||a.jenis===metric||(metric==='fu'&&['call','email','wa'].includes(a.jenis)))add(a.nama,(a.tgl||'').slice(0,7))});
+ return v;
+}
+function noDateSheets(){return DATA.filter(x=>/to do list/i.test(x.name)&&x.cols.findIndex(c=>/^(tanggal|date|tgl)\b/i.test(c.trim()))<0).map(x=>x.name.split(' ')[0])}
+function drawPerf(){
+ const el=$('perf');if(!el)return;
+ if(!PF.metric)PF.metric=AKT.length?'fu':'todo';
+ if(!PF.to)PF.to=ymNow();if(!PF.from)PF.from=ymAdd(PF.to,-5);if(PF.from>PF.to)[PF.from,PF.to]=[PF.to,PF.from];
+ const months=[];for(let m=PF.from;m<=PF.to&&months.length<24;m=ymAdd(m,1))months.push(m);
+ if(!PF.b||!months.includes(PF.b))PF.b=months[months.length-1];if(!PF.a||!months.includes(PF.a))PF.a=months[Math.max(0,months.length-2)];
+ const V=perfCount(PF.metric),sales=salesList();
+ const g=(n,m)=>((V[n.toLowerCase()]||{})[m]||0);
+ const colTot=months.map(m=>sales.reduce((a,n)=>a+g(n,m),0)),max=Math.max(1,...sales.flatMap(n=>months.map(m=>g(n,m))));
+ const dl=(a,b)=>{if(!a&&!b)return '<span class="dl eq">–</span>';if(!a)return '<span class="dl up">baru</span>';const p=Math.round((b-a)/a*100);return `<span class="dl ${p>0?'up':p<0?'dn':'eq'}">${p>0?'▲':p<0?'▼':'='}${Math.abs(p)}%</span>`};
+ let h=`<div class="sec" style="margin-top:0">📈 Performa Bulanan per Sales</div>
+ <div class="pctl"><label>Metrik<select id="pmet">${PM.map(([k,l])=>`<option value="${k}" ${k===PF.metric?'selected':''}>${l}</option>`).join('')}</select></label>
+  <label>Dari bulan<input type="month" id="pfrom" value="${PF.from}"></label><label>Sampai bulan<input type="month" id="pto" value="${PF.to}"></label>
+  <div class="ptab"><button class="${PF.view==='tabel'?'on':''}" data-v="tabel">Tabel</button><button class="${PF.view==='grafik'?'on':''}" data-v="grafik">Grafik</button></div></div>`;
+ if(PF.view==='tabel'){
+  h+=`<div class="tw" style="max-height:none"><table class="pm"><thead><tr><th>Sales</th>${months.map(m=>`<th>${ymLbl(m)}</th>`).join('')}<th>Total</th></tr></thead><tbody>`+
+  sales.map(n=>{let prev=null;const tot=months.reduce((a,m)=>a+g(n,m),0);
+   return `<tr><td><div style="display:flex;align-items:center;gap:8px">${avatar(n)}<b>${esc(n)}</b></div></td>`+months.map(m=>{const v=g(n,m);const c=`<td><span class="hb" style="background:rgba(29,78,216,${(v/max*.28).toFixed(3)})"></span><span>${v||'<span style="color:#cbd2dd">0</span>'}${prev!==null&&(v||prev)?dl(prev,v):''}</span></td>`;prev=v;return c}).join('')+`<td><b>${tot}</b></td></tr>`}).join('')+
+  `<tr class="tot"><td>Total tim</td>${colTot.map((v,i)=>`<td>${v}${i?dl(colTot[i-1],v):''}</td>`).join('')}<td>${colTot.reduce((a,b)=>a+b,0)}</td></tr></tbody></table></div>`;
+ }else{
+  const W=Math.max(560,months.length*Math.max(60,sales.length*14+24)),H=240,pl=36,pb=26,cw=(W-pl)/months.length,bw=Math.min(22,(cw-14)/Math.max(1,sales.length)),ymax=Math.max(1,max);
+  const step=Math.max(1,Math.ceil(ymax/4));let svg=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;min-width:${Math.min(W,700)}px;height:auto;font-family:inherit">`;
+  for(let y=0;y<=ymax+step-1;y+=step){const yy=H-pb-(y/ymax)*(H-pb-14);if(yy<8)break;svg+=`<line x1="${pl}" x2="${W}" y1="${yy}" y2="${yy}" stroke="#eef1f6"/><text x="${pl-6}" y="${yy+4}" text-anchor="end" font-size="10" fill="#8a94a6">${y}</text>`}
+  months.forEach((m,i)=>{const x0=pl+i*cw+(cw-bw*sales.length)/2;
+   sales.forEach((n,j)=>{const v=g(n,m),bh=(v/ymax)*(H-pb-14),c=PCOL[j%PCOL.length];
+    if(v)svg+=`<rect x="${x0+j*bw+1}" y="${H-pb-bh}" width="${bw-2}" height="${bh}" rx="3" fill="${c}"><title>${esc(n)} · ${ymLbl(m)}: ${v}</title></rect>`});
+   svg+=`<text x="${pl+i*cw+cw/2}" y="${H-8}" text-anchor="middle" font-size="11" fill="#5b6678">${ymLbl(m)}</text>`});
+  svg+='</svg>';
+  h+=`<div style="overflow-x:auto">${svg}</div><div class="leg">${sales.map((n,j)=>`<span><i style="background:${PCOL[j%PCOL.length]}"></i>${esc(n)}</span>`).join('')}</div>`;
+ }
+ // compare
+ h+=`<div class="sec">Bandingkan 2 bulan</div><div class="pctl"><label>Bulan A<select id="pa">${months.map(m=>`<option value="${m}" ${m===PF.a?'selected':''}>${ymLbl(m)}</option>`).join('')}</select></label>
+  <span style="padding-bottom:9px;font-weight:700;color:var(--mut)">vs</span><label>Bulan B<select id="pb">${months.map(m=>`<option value="${m}" ${m===PF.b?'selected':''}>${ymLbl(m)}</option>`).join('')}</select></label></div><div class="cmpg">`;
+ const ta=sales.reduce((a,n)=>a+g(n,PF.a),0),tb=sales.reduce((a,n)=>a+g(n,PF.b),0);
+ h+=`<div class="cmpc" style="background:#f7f9fc"><div><div class="s">Total tim</div><div class="v">${ta} → ${tb} ${dl(ta,tb)}</div></div></div>`;
+ h+=sales.map(n=>{const a=g(n,PF.a),b=g(n,PF.b);return `<div class="cmpc">${avatar(n)}<div><div class="s">${esc(n)}</div><div class="v">${a} → ${b} ${dl(a,b)}</div></div></div>`}).join('')+'</div>';
+ // notes
+ const nd=noDateSheets(),notes=[];
+ if(PF.metric==='todo'){notes.push('Dihitung dari kolom Tanggal/Date di tiap sheet to-do list (baris yang tanggalnya bisa dibaca).');if(nd.length)notes.push('Sheet tanpa kolom tanggal tidak terhitung: '+nd.join(', ')+'.')}
+ else{const first=AKT.map(a=>a.tgl).filter(Boolean).sort()[0];notes.push('Dihitung dari aktivitas ⚡ yang dicatat tim'+(first?' — data mulai '+tglPanjang(first)+'.':'. Belum ada aktivitas tercatat.'))}
+ h+=`<div class="meta" style="margin-top:12px">ℹ️ ${notes.join(' ')}</div>`;
+ el.innerHTML=h;
+ $('pmet').onchange=e=>{PF.metric=e.target.value;drawPerf()};
+ $('pfrom').onchange=e=>{PF.from=e.target.value;drawPerf()};$('pto').onchange=e=>{PF.to=e.target.value;drawPerf()};
+ $('pa').onchange=e=>{PF.a=e.target.value;drawPerf()};$('pb').onchange=e=>{PF.b=e.target.value;drawPerf()};
+ el.querySelectorAll('.ptab button').forEach(b=>b.onclick=()=>{PF.view=b.dataset.v;drawPerf()});
 }
 // ==== Aktivitas (tombol ⚡) ====
 const JL={call:'Call',email:'Email',wa:'WhatsApp',lead:'New Lead',kontak:'New Kontak',baru:'Data Baru'};
