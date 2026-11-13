@@ -345,7 +345,12 @@ tr:hover{background:#f1f5ff}
 <div class="modal" id="amod"><div class="mbox">
  <h3>⚡ Catat aktivitas</h3>
  <p id="asub" style="margin-bottom:4px"></p>
- <div id="acustw" style="display:none"><div class="fg"><label class="full">Nama customer / prospek<input id="acust" placeholder="mis. PT Contoh Logam"></label></div></div>
+ <div id="acustw" style="display:none"><div class="fg">
+  <label class="full">Nama customer / prospek<input id="acust" placeholder="mis. PT Contoh Logam" list="acustdl"><datalist id="acustdl"></datalist></label>
+  <label id="aatasw">Atas nama (sales)<select id="aatas"></select></label>
+  <label>Kontak PIC (opsional)<input id="akontak" placeholder="nama / no HP / email"></label>
+  <label class="full rem2"><span><input type="checkbox" id="atodo" checked> Masukkan ke <b id="atodon">to-do list</b> supaya bisa di-follow up</span></label>
+ </div></div>
  <div class="fg" style="margin-top:8px"><label class="full">Catatan (opsional)<input id="acat" maxlength="300" placeholder="mis. kirim compro, minta dihubungi minggu depan"></label></div>
  <div class="abtns">
   <button class="abtn call" data-j="call"><span>📞</span>Call</button>
@@ -355,7 +360,7 @@ tr:hover{background:#f1f5ff}
   <button class="abtn" data-j="kontak"><span>👤</span>New Kontak</button>
   <button class="abtn" data-j="baru"><span>🗂️</span>Data Baru</button>
  </div>
- <div class="meta" style="margin:0">Klik salah satu tombol = langsung tercatat untuk <b id="awho"></b> hari ini.</div>
+ <div class="meta" style="margin:0">Klik salah satu tombol = langsung tercatat untuk <b id="awho"></b> hari ini. Boleh klik beberapa (mis. Email lalu WA).</div>
  <div class="ahist" id="ahist"></div>
  <div class="act" style="margin-top:12px"><span class="msg" id="amsg"></span><button class="ghost" id="abatal">Tutup</button></div>
 </div></div>
@@ -919,11 +924,18 @@ function openAkt(k){
  if(!AUTH.u){showLogin('Login dulu');return}
  const free=k==null||cur<0;const s=free?null:DATA[cur];
  AED=free?{sheet:'',baris:'',cust:''}:{sheet:s.name,baris:s.ri[k]+1,cust:custOf(s,k),s,k};
- $('acustw').style.display=free?'':'none';$('acust').value='';$('acat').value='';$('amsg').textContent='';$('amsg').className='msg';
- $('awho').textContent=AUTH.u;
+ $('acustw').style.display=free?'':'none';$('acust').value='';$('acat').value='';$('akontak').value='';
+ if(free){const adm=AUTH.role==='Admin',ns=adm?[AUTH.u,...timNames()]:[AUTH.u];
+  $('aatas').innerHTML=ns.filter((v,i,a)=>a.findIndex(x=>x.toLowerCase()===v.toLowerCase())===i).map(n=>`<option>${esc(n)}</option>`).join('');
+  $('aatasw').style.display=adm?'':'none';$('atodo').checked=true;updAtodo();
+  const cs=new Set();DATA.forEach(s=>{const c=custCol(s);if(c>=0&&/to do list/i.test(s.name))s.rows.forEach(r=>r[c]&&cs.add(r[c]))});
+  $('acustdl').innerHTML=[...cs].slice(0,800).map(v=>`<option value="${esc(v)}">`).join('')}$('amsg').textContent='';$('amsg').className='msg';
+ $('awho').textContent=free?$('aatas').value||AUTH.u:AUTH.u;
  $('asub').innerHTML=free?'Untuk customer/prospek yang belum ada di database.':`<b>${esc(AED.cust||'(tanpa nama)')}</b> · ${esc(pretty(s.name))} baris ${AED.baris}`;
  drawAhist();$('amod').classList.add('show');setTimeout(()=>(free?$('acust'):$('acat')).focus(),50);
 }
+function updAtodo(){const n=$('aatas').value||AUTH.u;$('atodon').textContent='to-do list '+n;$('awho').textContent=n}
+$('aatas').onchange=updAtodo;
 function drawAhist(){
  const list=AED.s?aktFor(AED.s,AED.k):[];
  $('ahist').innerHTML=list.length?'<div style="border:0;font-weight:700;color:var(--mut)">Riwayat aktivitas customer ini</div>'+list.slice().sort((a,b)=>a.waktu<b.waktu?1:-1).map(a=>`<div><span class="jtag j-${a.jenis}">${esc(JL[a.jenis]||a.jenis)}</span><b>${esc(a.nama)}</b><span style="color:var(--mut)">${esc((a.waktu||'').slice(0,16))}</span><span>${esc(a.cat||'')}</span>${canDel(a)?`<button class="x" title="Hapus (salah klik)" onclick="hapusAkt('${a.id}')">✕</button>`:''}</div>`).join(''):'';
@@ -932,11 +944,17 @@ document.querySelectorAll('.abtn').forEach(b=>b.onclick=async()=>{
  const j=b.dataset.j,m=$('amsg');let cust=AED.cust;
  if(!AED.sheet){cust=$('acust').value.trim();if(!cust){m.className='msg err';m.textContent='Isi nama customer dulu';$('acust').focus();return}}
  document.querySelectorAll('.abtn').forEach(x=>x.disabled=true);m.className='msg';m.textContent='Menyimpan…';
- try{const r=await post(getAPI(),JSON.stringify({action:'akt_simpan',u:AUTH.u,p:AUTH.p,jenis:j,sheet:AED.sheet,baris:AED.baris,cust,cat:$('acat').value.trim()}));
+ const free=!AED.sheet,atas=free?($('aatas').value||AUTH.u):AUTH.u;
+ try{const r=await post(getAPI(),JSON.stringify({action:'akt_simpan',u:AUTH.u,p:AUTH.p,jenis:j,sheet:AED.sheet,baris:AED.baris,cust,cat:$('acat').value.trim(),
+   atasNama:atas,keTodo:free&&$('atodo').checked,kontak:free?$('akontak').value.trim():''}));
   if(r.auth===false){$('amod').classList.remove('show');logout(r.error);return}
   if(!r.ok)throw new Error(r.error||'Gagal');
-  if(r.akt)AKT.push(r.akt);else AKT.push({waktu:new Date().toISOString().replace('T',' ').slice(0,19),tgl:todayISO(),nama:AUTH.u,jenis:j,sheet:AED.sheet,baris:AED.baris,cust,cat:$('acat').value.trim(),id:''});
-  $('acat').value='';m.className='msg ok';m.textContent='✔ '+JL[j]+' tercatat';drawAhist();
+  if(r.akts&&r.akts.length>1)r.akts.slice(0,-1).forEach(a=>AKT.push(a));
+  if(r.todo){toast(r.todo.sudahAda?`ℹ️ ${cust} sudah ada di ${r.todo.sheet} (baris ${r.todo.row})`:`✔ ${cust} dimasukkan ke ${r.todo.sheet} baris ${r.todo.row}`);setTimeout(()=>loadLive(true),400)}
+  if(r.dobel){m.className='msg';m.textContent='ℹ️ '+JL[j]+' untuk customer ini sudah tercatat hari ini — tidak dihitung dobel';if(cur===-5)drawRep();return}
+  AKT=AKT.filter(a=>!(a.jenis==='update'&&a.tgl===todayISO()&&a.nama.toLowerCase()===atas.toLowerCase()&&(a.cust||'').toLowerCase()===(cust||'').toLowerCase()));
+  if(r.akt)AKT.push(r.akt);else AKT.push({waktu:new Date().toISOString().replace('T',' ').slice(0,19),tgl:todayISO(),nama:atas,jenis:j,sheet:AED.sheet,baris:AED.baris,cust,cat:$('acat').value.trim(),id:''});
+  $('acat').value='';m.className='msg ok';m.textContent='✔ '+JL[j]+' tercatat untuk '+atas;drawAhist();
   if(cur>=0)render();if(cur===-5)drawRep();
  }catch(e){m.className='msg err';m.textContent='❌ '+e.message}finally{document.querySelectorAll('.abtn').forEach(x=>x.disabled=false)}
 });
