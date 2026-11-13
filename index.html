@@ -234,10 +234,10 @@ tr:hover{background:#f1f5ff}
 .rep .rlogo{display:flex;gap:6px;margin-bottom:8px}.rep .rlogo .em{width:34px;height:34px;font-size:10px;border-radius:9px}
 .rep .rdate{display:flex;align-items:center;gap:10px;background:#0b1f4d;color:#fff;font-weight:800;font-size:19px;padding:10px 24px 10px 14px;border-radius:30px;border:3px solid #f5b301;white-space:nowrap}
 .rep .rdate svg{width:26px;height:26px;stroke:#f5b301;fill:none;stroke-width:2}
-.rep .tiles{display:grid;grid-template-columns:repeat(6,1fr) 1.55fr;gap:12px;padding:12px 28px}
+.rep .tiles{display:grid;grid-template-columns:repeat(7,1fr) 1.45fr;gap:12px;padding:12px 28px}
 .rep .tile{background:#fff;border-radius:16px;box-shadow:0 4px 14px rgba(11,31,77,.08);text-align:center;padding:14px 8px 10px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;min-height:150px}
 .rep .tile .ti{width:38px;height:38px}.rep .tile .ti svg{width:38px;height:38px;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.rep .tile b{font-size:13.5px;line-height:1.15;margin:6px 0}
+.rep .tile b{font-size:12.5px;line-height:1.15;margin:6px 0}
 .rep .tile .num{background:#f1f4f9;border-radius:14px;width:80%;font-size:34px;font-weight:800;line-height:1.3}
 .rep .tile.tot{background:#0b1f4d;color:#fff;border:3px solid #f5b301;justify-content:center}
 .rep .tile.tot b{font-size:18px}.rep .tile.tot .num{background:none;color:#f5b301;font-size:46px;width:auto;line-height:1}
@@ -270,7 +270,7 @@ tr:hover{background:#f1f5ff}
 .ahist div{display:flex;gap:8px;align-items:center;font-size:12.5px;padding:5px 0;border-bottom:1px dashed #edf0f5}
 .ahist .x{margin-left:auto;border:0;background:none;color:#b42318;cursor:pointer;padding:2px 6px;box-shadow:none}
 .jtag{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:9px;white-space:nowrap}
-.j-call{background:#e5edff;color:#1d4ed8}.j-email{background:#fff3d6;color:#a16207}.j-wa{background:#dcfce7;color:#15803d}.j-lead{background:#fde7f3;color:#be185d}.j-kontak{background:#ede9fe;color:#6d28d9}.j-baru{background:#e0f2fe;color:#0369a1}
+.j-call{background:#e5edff;color:#1d4ed8}.j-email{background:#fff3d6;color:#a16207}.j-wa{background:#dcfce7;color:#15803d}.j-lead{background:#fde7f3;color:#be185d}.j-kontak{background:#ede9fe;color:#6d28d9}.j-baru{background:#e0f2fe;color:#0369a1}.j-update{background:#f3e8ff;color:#7c3aed}
 .adet{margin:18px auto 0;width:1100px;max-width:100%}
 .adet details{background:#fff;border:1px solid #e8ebf2;border-radius:12px;margin-bottom:8px;padding:10px 14px}
 .adet summary{cursor:pointer;font-weight:700;font-size:13.5px}
@@ -707,13 +707,14 @@ $('esave').onclick=async()=>{
 };
 document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.modal.show').forEach(m=>m.classList.remove('show'))});
 // ==== Laporan Harian ====
-const LK=[['baru','Data Baru'],['kontak','New Kontak'],['call','Follow-up Call'],['email','Follow-up Email'],['wa','Follow-up WhatsApp'],['lead','New Lead']];
+const LK=[['baru','Data Baru'],['kontak','New Kontak'],['update','Update Data'],['call','Follow-up Call'],['email','Follow-up Email'],['wa','Follow-up WhatsApp'],['lead','New Lead']];
 const LICON={
  baru:'<svg viewBox="0 0 24 24" stroke="#1d4ed8"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 10h6M9 14h6M9 18h3"/></svg>',
  kontak:'<svg viewBox="0 0 24 24" stroke="#1d4ed8"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
  call:'<svg viewBox="0 0 24 24" stroke="#1d4ed8"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg>',
  email:'<svg viewBox="0 0 24 24" stroke="#f5a300"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>',
  wa:'<svg viewBox="0 0 24 24" stroke="#16a34a"><path d="M20 12a8 8 0 0 1-11.8 7L4 20l1.1-4A8 8 0 1 1 20 12z"/><path d="M9 9.5c.5 2 2.5 4 4.5 4.5l1-1 2 1"/></svg>',
+ update:'<svg viewBox="0 0 24 24" stroke="#7c3aed"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>',
  lead:'<svg viewBox="0 0 24 24" stroke="#f5a300"><circle cx="10" cy="8" r="4"/><path d="M3 21a7 7 0 0 1 14 0M19 6v6M16 9h6"/></svg>'
 };
 const todayISO=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
@@ -753,33 +754,34 @@ function repData(){
 }
 function tglPanjang(iso){const [y,m,d]=iso.split('-').map(Number);return new Date(y,m-1,d).toLocaleDateString('id',{day:'numeric',month:'long',year:'numeric'})}
 function catatan(D){
- const out=[],lbl={call:'Follow-up call',email:'Follow-up email',wa:'Follow-up WhatsApp',baru:'Data baru',kontak:'New kontak',lead:'New Lead'};
+ const out=[],lbl={call:'Follow-up call',email:'Follow-up email',wa:'Follow-up WhatsApp',baru:'Data baru',kontak:'New kontak',lead:'New Lead',update:'Update data'};
  const who=k=>D.rows.filter(x=>x.r&&x.r[k]>0).sort((a,b)=>b.r[k]-a.r[k]).map(x=>`${x.nama} (${x.r[k]})`);
  ['email','call','wa'].forEach(k=>{if(D.tot[k])out.push(`<b>${lbl[k]} tercatat ${D.tot[k]} aktivitas: ${who(k).join(', ').replace(/, ([^,]*)$/,' dan $1')}.</b>`)});
  if(D.tot.lead)out.push(`<b>New Lead hari ini sebanyak ${D.tot.lead}: ${who('lead').join(', ')}.</b>`);
+ if(D.tot.update)out.push(`Update data customer: ${D.tot.update} customer (${who('update').join(', ')}).`);
  if(D.tot.baru||D.tot.kontak)out.push(`Data baru ${D.tot.baru}, new kontak ${D.tot.kontak}.`);
  const nol=['baru','kontak','call','wa','email','lead'].filter(k=>!D.tot[k]).map(k=>lbl[k]);
  if(nol.length)out.push(`${nol.join(', ').replace(/, ([^,]*)$/,', dan $1')}: <b>0 aktivitas.</b>`);
  const belum=D.rows.filter(x=>!x.r).map(x=>x.nama);
  if(belum.length)out.push(`Belum ada aktivitas tercatat: ${belum.join(', ')}.`);
- return out.slice(0,5);
+ return out.slice(0,6);
 }
 function drawRep(){
  const D=repData(),ke=($('rke')&&$('rke').value)||'Pak Willy';
- const tiles=LK.map(([k,l])=>`<div class="tile"><span class="ti">${LICON[k]}</span><b>${l.replace('Follow-up ','Follow-up<br>').replace('New ','New<br>')}</b><div class="num">${D.tot[k]}</div></div>`).join('');
+ const tiles=LK.map(([k,l])=>`<div class="tile"><span class="ti">${LICON[k]}</span><b>${l.replace('Follow-up ','Follow-up<br>').replace('New ','New<br>').replace('Update ','Update<br>')}</b><div class="num">${D.tot[k]}</div></div>`).join('');
  const rows=D.rows.map(x=>`<tr><td>${esc(x.nama)}</td>${LK.map(([k])=>{const v=x.r?x.r[k]:0;return `<td class="${v?'nz':''}">${v}</td>`}).join('')}<td class="${x.r&&x.r.ket?'':'blank'}">${x.r?esc(x.r.ket||'—'):'belum ada aktivitas'}</td></tr>`).join('');
  $('repwrap').innerHTML=`<div class="rep" id="repcard"><div class="topline"></div>
  <div class="rh"><div><div class="rlogo">${emblem('swm')}${emblem('gan')}</div><div class="rt"><h1>Laporan Aktivitas<br>Marketing Harian</h1><p>Laporan ke ${esc(ke)}</p></div></div>
   <div class="rdate"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M7 14h2M11 14h2M15 14h2M7 17h2M11 17h2"/></svg>${tglPanjang(lapTgl)}</div></div>
  <div class="tiles">${tiles}<div class="tile tot"><span class="ti"><svg viewBox="0 0 24 24" stroke="#f5b301"><path d="M4 20h16"/><rect x="5" y="13" width="3" height="6" fill="#f5b301"/><rect x="10.5" y="10" width="3" height="9" fill="#f5b301"/><rect x="16" y="7" width="3" height="12" fill="#f5b301"/><path d="M4 11l6-5 4 3 6-6M16 3h4v4" stroke="#fff"/></svg></span><b>Total Aktivitas<br>Follow-up</b><div class="num">${D.fu}</div></div></div>
- <table><thead><tr><th>Nama Marketing</th><th>Data Baru</th><th>New<br>Kontak</th><th>By Call</th><th>Email</th><th>WhatsApp</th><th>New<br>Lead</th><th style="width:30%">Keterangan</th></tr></thead><tbody>${rows||'<tr><td colspan="8" class="blank">Belum ada anggota tim</td></tr>'}</tbody></table>
+ <table><thead><tr><th>Nama Marketing</th><th>Data Baru</th><th>New<br>Kontak</th><th>Update<br>Data</th><th>By Call</th><th>Email</th><th>WhatsApp</th><th>New<br>Lead</th><th style="width:30%">Keterangan</th></tr></thead><tbody>${rows||'<tr><td colspan="9" class="blank">Belum ada anggota tim</td></tr>'}</tbody></table>
  <div class="bottom"><svg class="ill" viewBox="0 0 210 150"><rect x="20" y="22" width="170" height="110" rx="10" fill="#1d4ed8"/><rect x="32" y="34" width="146" height="86" rx="4" fill="#fff"/>
   <rect x="58" y="88" width="16" height="26" fill="#1d4ed8"/><rect x="84" y="74" width="16" height="40" fill="#1d4ed8"/><rect x="110" y="62" width="16" height="52" fill="#1d4ed8"/><rect x="136" y="48" width="16" height="66" fill="#1d4ed8"/>
   <path d="M50 108L150 40" stroke="#f5b301" stroke-width="5"/><path d="M140 36l14 2-4 13z" fill="#f5b301"/><rect x="95" y="132" width="20" height="10" fill="#0b1f4d"/><rect x="75" y="142" width="60" height="6" rx="3" fill="#0b1f4d"/>
   <path d="M6 70l26-10v34L6 84z" fill="#cfd9ee" stroke="#0b1f4d" stroke-width="3"/><rect x="0" y="70" width="8" height="14" rx="2" fill="#0b1f4d"/></svg>
   <div class="note"><div class="nh"><i><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#fff" stroke-width="2.4"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 15l6-6"/></svg></i>Catatan Singkat</div><ul>${catatan(D).map(x=>`<li>${x}</li>`).join('')}</ul></div></div>
  <div class="foot">Prepared for Management Update · PT Sumi Win Mukti &amp; Garuda Aluminium Nusantara</div></div>
- <div class="adet"><div class="sec">Detail aktivitas ${tglPanjang(lapTgl)} — bukti per customer</div>${D.rows.filter(x=>x.ak.length).map(x=>`<details><summary>${esc(x.nama)} — ${x.ak.length} aktivitas</summary>${x.ak.slice().sort((a,b)=>a.waktu<b.waktu?-1:1).map(a=>`<div class="ar"><span style="color:var(--mut);width:42px">${esc((a.waktu||'').slice(11,16))}</span><span class="jtag j-${a.jenis}">${esc(JL[a.jenis]||a.jenis)}</span><b>${esc(a.cust||'—')}</b><span style="color:var(--mut)">${esc(a.cat||'')}</span>${canDel(a)?`<button class="ghost" style="margin-left:auto;padding:2px 8px;font-size:11px;color:#b42318" onclick="hapusAkt('${a.id}')">hapus</button>`:''}</div>`).join('')}</details>`).join('')||'<div class="meta">Belum ada aktivitas tercatat di tanggal ini. Aktivitas dicatat lewat tombol ⚡ di tiap baris customer.</div>'}</div>`;
+ <div class="adet"><div class="sec">Detail aktivitas ${tglPanjang(lapTgl)} — bukti per customer</div>${D.rows.filter(x=>x.ak.length).map(x=>`<details><summary>${esc(x.nama)} — ${x.ak.length} aktivitas</summary>${x.ak.slice().sort((a,b)=>a.waktu<b.waktu?-1:1).map(a=>`<div class="ar"><span style="color:var(--mut);width:42px">${esc((a.waktu||'').slice(11,16))}</span><span class="jtag j-${a.jenis}">${esc(JL[a.jenis]||a.jenis)}</span><b>${esc(a.cust||'—')}</b><span style="color:var(--mut)">${esc(a.cat||'')}</span>${canDel(a)?`<button class="ghost" style="margin-left:auto;padding:2px 8px;font-size:11px;color:#b42318" onclick="hapusAkt('${a.id}')">hapus</button>`:''}</div>`).join('')}</details>`).join('')||'<div class="meta">Belum ada aktivitas tercatat di tanggal ini. Aktivitas tercatat otomatis saat tim mengubah data (di HTML maupun langsung di Spreadsheet), atau lewat tombol ⚡.</div>'}</div>`;
 }
 function openLap(){
  const nm=$('lnama');const names=AUTH.role==='Admin'?[AUTH.u,...timNames()].filter((v,i,a)=>a.findIndex(x=>x.toLowerCase()===v.toLowerCase())===i):[AUTH.u];
@@ -812,7 +814,7 @@ function copyRep(){
  const D=repData(),ke=($('rke').value||'Pak Willy');
  let t=`*LAPORAN AKTIVITAS MARKETING HARIAN*\n${tglPanjang(lapTgl)} — Laporan ke ${ke}\n\n`;
  t+=LK.map(([k,l])=>`${l}: ${D.tot[k]}`).join('\n')+`\n*Total Follow-up: ${D.fu}*\n\n`;
- t+=D.rows.map(x=>x.r?`• ${x.nama}: Call ${x.r.call}, Email ${x.r.email}, WA ${x.r.wa}, Lead ${x.r.lead}${x.r.ket?' — '+x.r.ket:''}`:`• ${x.nama}: (belum ada aktivitas)`).join('\n');
+ t+=D.rows.map(x=>x.r?`• ${x.nama}: Update ${x.r.update}, Call ${x.r.call}, Email ${x.r.email}, WA ${x.r.wa}, Lead ${x.r.lead}${x.r.ket?' — '+x.r.ket:''}`:`• ${x.nama}: (belum ada aktivitas)`).join('\n');
  navigator.clipboard.writeText(t).then(()=>toast('✔ Teks laporan disalin — tinggal paste di WhatsApp'),()=>toast('Gagal menyalin'));
 }
 // ==== Performa bulanan ====
@@ -833,7 +835,7 @@ const ymNow=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth
 const ymAdd=(ym,n)=>{let [y,m]=ym.split('-').map(Number);m+=n;while(m<1){m+=12;y--}while(m>12){m-=12;y++}return y+'-'+String(m).padStart(2,'0')};
 const ymLbl=ym=>{const [y,m]=ym.split('-');return BLNN[+m-1]+' '+y.slice(2)};
 const PCOL=['#2563eb','#f59e0b','#dc2626','#059669','#7c3aed','#0891b2','#db2777','#65a30d','#ea580c','#475569'];
-const PM=[['todo','Customer di to-do list'],['fu','Total follow-up (Call+Email+WA)'],['all','Semua aktivitas ⚡'],['call','Call'],['email','Email'],['wa','WhatsApp'],['lead','New Lead'],['kontak','New Kontak'],['baru','Data Baru']];
+const PM=[['todo','Customer di to-do list'],['fu','Total follow-up (Call+Email+WA)'],['all','Semua aktivitas ⚡'],['call','Call'],['email','Email'],['wa','WhatsApp'],['lead','New Lead'],['kontak','New Kontak'],['baru','Data Baru'],['update','Update Data (edit kolom apa pun)']];
 let PF={metric:'',from:'',to:'',a:'',b:'',view:'tabel'};
 function salesList(){
  const s=new Set();
@@ -907,7 +909,7 @@ function drawPerf(){
  el.querySelectorAll('.ptab button').forEach(b=>b.onclick=()=>{PF.view=b.dataset.v;drawPerf()});
 }
 // ==== Aktivitas (tombol ⚡) ====
-const JL={call:'Call',email:'Email',wa:'WhatsApp',lead:'New Lead',kontak:'New Kontak',baru:'Data Baru'};
+const JL={call:'Call',email:'Email',wa:'WhatsApp',lead:'New Lead',kontak:'New Kontak',baru:'Data Baru',update:'Update Data'};
 let AED=null;
 function custOf(s,k){const cc=custCol(s);return cc>=0?s.rows[k][cc]:(s.rows[k].find(v=>v)||'')}
 function aktFor(s,k){const c=custOf(s,k).toLowerCase(),rw=s.ri?s.ri[k]+1:0;return AKT.filter(a=>a.sheet===s.name&&(+a.baris===rw||(c&&a.cust.toLowerCase()===c)))}
