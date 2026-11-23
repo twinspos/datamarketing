@@ -304,33 +304,47 @@ tr:hover{background:#f1f5ff}
 .whochip{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;background:#f1f5ff;border:1px solid #dbe5ff;color:#1d3b7a;padding:3px 4px 3px 10px;border-radius:20px}
 .whochip button{padding:4px 10px;font-size:11.5px;border-radius:14px}
 
-/* ===== Sidebar modern (terang) ===== */
-aside{background:#fff!important;color:#334155;border-right:1px solid #e8ecf3;box-shadow:none!important;padding:16px 0 24px!important}
+/* ===== Sidebar modern — warna logo GAN (hijau → biru tua) + aksen merah/oranye SWM ===== */
+:root{--g1:#05623a;--g2:#0b4a3a;--g3:#253445;--r1:#d62821;--o1:#f39c12}
+aside{background:linear-gradient(180deg,var(--g1) 0%,var(--g2) 45%,var(--g3) 100%)!important;color:#e6f2ec;border-right:0;box-shadow:4px 0 24px rgba(5,40,30,.18)!important;padding:16px 0 24px!important}
 aside::after{display:none}
-aside .brand{padding:0 18px 12px!important;margin:0!important;border:0!important}
-aside h1{color:#0b1f4d!important;font-size:17px!important;font-weight:800!important}
-aside .sub{color:#94a3b8!important;font-size:11.5px}
-.sq{margin:4px 14px 6px;position:relative}
-.sq input{width:100%;box-sizing:border-box;padding:9px 12px 9px 34px;border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc;font-size:13px;color:#0f172a;outline:none;transition:border .15s,background .15s}
-.sq input:focus{border-color:#93c5fd;background:#fff;box-shadow:0 0 0 3px rgba(59,130,246,.12)}
-.sq svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:15px;height:15px;stroke:#94a3b8;fill:none;stroke-width:2}
-.slbl{font-size:10.5px;font-weight:700;letter-spacing:.1em;color:#94a3b8;margin:16px 22px 6px;text-transform:uppercase}
-aside .nav{color:#334155!important;padding:8px 12px!important;margin:1px 12px!important;border-radius:10px!important;font-size:13.5px!important;box-shadow:none!important;background:transparent}
-aside .nav:hover{background:#f1f5f9!important;color:#0f172a!important}
-aside .nav.on{background:#eef4ff!important;color:#1d4ed8!important;font-weight:700!important;box-shadow:inset 3px 0 0 #1d4ed8!important}
-aside .ic:not(.av){background:#f1f5f9!important;color:#475569!important}
+aside .brand{padding:2px 18px 12px!important;margin:0!important;border:0!important}
+aside h1{color:#fff!important;font-size:17px!important;font-weight:800!important;letter-spacing:-.01em}
+aside .sub{color:#a7d3bf!important;font-size:11.5px}
+.sbar{height:3px;margin:0 18px 12px;border-radius:3px;background:linear-gradient(90deg,var(--r1),var(--o1),#fbbf24)}
+.sq{margin:2px 14px 6px;position:relative}
+.sq input{width:100%;box-sizing:border-box;padding:9px 12px 9px 34px;border:1px solid rgba(255,255,255,.14);border-radius:10px;background:rgba(255,255,255,.08);font-size:13px;color:#fff;outline:none;transition:border .15s,background .15s}
+.sq input::placeholder{color:#a7c7b8}
+.sq input:focus{border-color:rgba(251,191,36,.7);background:rgba(255,255,255,.14)}
+.sq svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:15px;height:15px;stroke:#a7c7b8;fill:none;stroke-width:2}
+.slbl{font-size:10.5px;font-weight:700;letter-spacing:.12em;color:#8fc4ad;margin:16px 22px 6px;text-transform:uppercase}
+aside .nav{color:#e3efe9!important;padding:8px 12px!important;margin:1px 12px!important;border-radius:10px!important;font-size:13.5px!important;box-shadow:none!important;background:transparent}
+aside .nav:hover{background:rgba(255,255,255,.08)!important;color:#fff!important}
+aside .nav.on{background:rgba(255,255,255,.15)!important;color:#fff!important;font-weight:700!important;box-shadow:inset 3px 0 0 var(--o1)!important}
 aside .ic{width:28px!important;height:28px!important;border-radius:8px!important;font-size:10px!important}
+aside .ic:not(.av){background:rgba(255,255,255,.1)!important;color:#d7ece2!important}
 aside .ic svg{width:15px!important;height:15px!important}
-aside .nav.on .ic:not(.av){background:#1d4ed8!important;color:#fff!important}
-aside .ic.av{color:#fff!important}
-aside .nav .n{background:#f1f5f9!important;color:#64748b!important;font-weight:600;font-size:11px!important;border-radius:20px!important;padding:2px 8px!important}
-aside .nav.on .n{background:#1d4ed8!important;color:#fff!important}
-aside .nav.me{background:linear-gradient(135deg,#eef4ff,#f5f3ff)!important;border:1px solid #dbe5ff}
-aside .grp{color:#64748b!important;margin:4px 12px 2px!important;padding:8px 12px!important;border-radius:10px;font-size:11px!important}
-aside .grp:hover{background:#f8fafc!important;color:#0f172a!important}
-aside .grp .gc{background:#eef2f7!important;color:#64748b!important}
+aside .nav.on .ic:not(.av){background:linear-gradient(135deg,var(--r1),var(--o1))!important;color:#fff!important;box-shadow:0 3px 10px rgba(214,40,33,.35)}
+aside .ic.av{color:#fff!important;box-shadow:0 0 0 2px rgba(255,255,255,.25)}
+aside .nav .n{background:rgba(255,255,255,.12)!important;color:#d7ece2!important;font-weight:600;font-size:11px!important;border-radius:20px!important;padding:2px 8px!important}
+aside .nav.on .n{background:var(--o1)!important;color:#1f1300!important}
+aside .nav.me{background:linear-gradient(135deg,rgba(214,40,33,.28),rgba(243,156,18,.22))!important;border:1px solid rgba(243,156,18,.35)}
+aside .grp{color:#a7d3bf!important;margin:4px 12px 2px!important;padding:8px 12px!important;border-radius:10px;font-size:11px!important}
+aside .grp:hover{background:rgba(255,255,255,.07)!important;color:#fff!important}
+aside .grp .gc{background:rgba(243,156,18,.2)!important;color:#fcd38a!important}
 aside .hide{display:none!important}
-aside .nomatch{font-size:12.5px;color:#94a3b8;margin:8px 24px}
+aside .nomatch{font-size:12.5px;color:#a7c7b8;margin:8px 24px}
+aside::-webkit-scrollbar{width:8px}aside::-webkit-scrollbar-thumb{background:rgba(255,255,255,.18);border-radius:8px}
+/* logo lebih jelas */
+#title{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hlogo{gap:8px!important}
+.hlogo .em{height:38px!important;border-radius:11px!important;box-shadow:0 2px 10px rgba(15,27,45,.12)!important;border:1px solid #eef1f6;padding:0 10px!important}
+.hlogo .em img{height:80%!important}
+.hero{background:linear-gradient(120deg,var(--g1) 0%,var(--g2) 40%,var(--g3) 100%)!important}
+.hero .hl{gap:12px!important}
+.hero .em{height:64px!important;border-radius:14px!important;padding:0 14px!important;box-shadow:0 6px 18px rgba(0,0,0,.25)!important}
+.hero .em img{height:82%!important}
+.hero p{color:#cfe6dc!important}
 </style>
 </head>
 <body>
@@ -600,7 +614,7 @@ function buildSide(){
  const used=new Set();
  const top=(id,ic,lbl,n,cls)=>`<div class="nav top ${cur===id?'on':''} ${cls||''}" data-k="${esc(lbl.toLowerCase())}" onclick="show(${id})"><span class="ic">${ic}</span><span class="lbl">${lbl}</span>${n?`<span class="n">${n}</span>`:''}</div>`;
  let h=`<div class="brand"><div><h1>Marketing Database</h1><div class="sub">${DATA.length} sheet · ${DATA.reduce((a,s)=>a+s.rows.length,0).toLocaleString('id')} baris data</div></div></div>
- <div class="sq">${SVG.search}<input id="sideq" placeholder="Cari menu / sheet…" value="${esc(SQ)}" autocomplete="off"></div>`;
+ <div class="sbar"></div><div class="sq">${SVG.search}<input id="sideq" placeholder="Cari menu / sheet…" value="${esc(SQ)}" autocomplete="off"></div>`;
  // to-do saya
  const mine=AUTH.u?DATA.findIndex(s=>new RegExp('^'+AUTH.u.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\s+to do list','i').test(s.name)):-1;
  h+=`<div class="slbl">Menu Utama</div>`;
