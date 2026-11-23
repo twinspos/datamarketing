@@ -1025,10 +1025,10 @@ async function hapusAkt(id){
  }catch(e){toast('❌ '+e.message)}
 }
 // ==== Status lead & Pipeline ====
-function leadLokal(a){if(!a||!['lead','baru'].includes(a.jenis)||!a.cust)return;const id=normC(a.cust);if(!id||LEAD.some(l=>l.id===id))return;
+function leadLokal(a){if(!a||a.jenis!=='lead'||!a.cust)return;const id=normC(a.cust);if(!id||LEAD.some(l=>l.id===id))return;
  const now=new Date().toISOString().replace('T',' ').slice(0,19);
  LEAD.push({row:0,id,cust:a.cust,sheet:a.sheet||'',baris:a.baris||'',mkt:a.nama,tahap:'Data',ingot:'',alloy:'',vol:'',supplier:'',ke:'',cat:'',tHub:'',tRes:'',tQua:'',tSer:'',upd:now,oleh:a.nama,tData:a.tgl||todayISO()});
- LEADLOG.unshift({waktu:now,id,cust:a.cust,oleh:a.nama,dari:'(baru)',ke:'Data',ubah:'Otomatis dari '+(a.jenis==='lead'?'New Lead':'Data Baru')})}
+ LEADLOG.unshift({waktu:now,id,cust:a.cust,oleh:a.nama,dari:'(baru)',ke:'Data',ubah:'Otomatis dari New Lead'})}
 function normC(x){return String(x||'').toLowerCase().replace(/\(.*?\)/g,' ').replace(/\b(pt|cv|pd|ud|tbk|co|ltd|inc|persero)\b\.?/g,' ').replace(/[^a-z0-9]+/g,' ').trim()}
 function leadOf(c){const n=normC(c);return n?LEAD.find(l=>l.id===n):null}
 const tslug=t=>t==='Tidak Cocok'?'tidak':String(t||'data').toLowerCase();
@@ -1126,7 +1126,7 @@ function drawPipe(){
  <div class="box"><div class="sec" style="margin-top:0">Per marketing</div><div class="tw"><table class="rtab"><thead><tr><th>Marketing</th>${TAHAPL.map(t=>`<th>${esc(t)}</th>`).join('')}${ppOn()?'':'<th>Total</th>'}</tr></thead><tbody>${per||'<tr><td colspan="8" class="blank">Belum ada data di periode ini</td></tr>'}</tbody></table></div></div>
  <div class="box"><div class="sec" style="margin-top:0">${PP.t?esc(PP.t):'Daftar lead'} — ${list.length}${PP.t?' <a href="#" onclick="PP.t=\'\';drawPipe();return false" style="font-size:12px">(tampilkan semua)</a>':''}</div>
  <div class="tw"><table class="rtab"><thead><tr><th>Customer</th><th>Tahap</th><th>Marketing</th><th>Pakai Ingot</th><th>Alloy</th><th>Volume/bln</th><th>Supplier Sekarang</th><th>Diserahkan Ke</th><th>Tgl Masuk</th><th>Tgl Dihubungi</th><th>Tgl Qualified</th><th>Tgl Serah</th><th>Catatan</th></tr></thead><tbody>
- ${list.map(l=>`<tr style="cursor:pointer" onclick="openLead(null,${esc(JSON.stringify(l.id))})"><td><b>${esc(l.cust)}</b></td><td>${tpill(l)}</td><td>${esc(l.mkt)}</td><td>${esc(l.ingot)}</td><td>${esc(l.alloy)}</td><td>${esc(l.vol)}</td><td>${esc(l.supplier)}</td><td>${esc(l.ke)}</td><td>${esc(l.tData)}</td><td>${esc(l.tHub)}</td><td>${esc(l.tQua)}</td><td>${esc(l.tSer)}</td><td>${esc(l.cat)}</td></tr>`).join('')||'<tr><td colspan="13" class="blank">Belum ada. Lead otomatis masuk saat ⭐ New Lead / 🗂️ Data Baru dicatat, atau klik 🎯 di baris customer (di sheet mana pun) untuk mengisi tahap lead.</td></tr>'}</tbody></table></div></div></div>`;
+ ${list.map(l=>`<tr style="cursor:pointer" onclick="openLead(null,${esc(JSON.stringify(l.id))})"><td><b>${esc(l.cust)}</b></td><td>${tpill(l)}</td><td>${esc(l.mkt)}</td><td>${esc(l.ingot)}</td><td>${esc(l.alloy)}</td><td>${esc(l.vol)}</td><td>${esc(l.supplier)}</td><td>${esc(l.ke)}</td><td>${esc(l.tData)}</td><td>${esc(l.tHub)}</td><td>${esc(l.tQua)}</td><td>${esc(l.tSer)}</td><td>${esc(l.cat)}</td></tr>`).join('')||'<tr><td colspan="13" class="blank">Belum ada. Lead otomatis masuk saat ⭐ New Lead dicatat, atau klik 🎯 di baris customer (di sheet mana pun) untuk mengisi tahap lead.</td></tr>'}</tbody></table></div></div></div>`;
  $('content').querySelectorAll('.pc').forEach(c=>c.onclick=()=>{PP.t=PP.t===c.dataset.t?'':c.dataset.t;drawPipe()});
 }
 function ppFile(){return 'Funnel Lead '+(ppOn()?(PP.from||'awal')+'_'+(PP.to||'sekarang'):'semua')+(PP.m?' '+PP.m:'')}
