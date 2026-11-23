@@ -632,7 +632,7 @@ function buildSide(){
  h+=`<div class="slbl">Menu Utama</div>`;
  if(mine>=0)h+=`<div class="nav top ${cur===mine?'on':''} me" data-k="to-do saya ${esc(DATA[mine].name.toLowerCase())}" onclick="show(${mine})">${navIcon(DATA[mine].name)}<span class="lbl">To-do List Saya</span><span class="n">${DATA[mine].rows.length}</span></div>`;
  h+=top(-1,SVG.home,'Ringkasan')+top(-8,SVG.funnel,'Pipeline Lead',LEAD.length);
- h+=`<div class="slbl">Laporan</div>`+top(-5,SVG.cal,'Laporan Harian')+top(-7,SVG.cal,'Laporan Mingguan')+top(-6,SVG.cal,'Laporan Bulanan')+top(-9,SVG.chart,'Laporan Digital');
+ h+=`<div class="slbl">Laporan</div>`+top(-5,SVG.cal,'Laporan Harian')+top(-7,SVG.cal,'Laporan Mingguan')+top(-6,SVG.cal,'Laporan Bulanan')+top(-9,SVG.chart,'Laporan Digital')+top(-10,SVG.chart,'Perbandingan');
  h+=`<div class="slbl">Lainnya</div>`+top(-3,SVG.clock,'Riwayat Update',LOG&&LOG.length)+(AUTH.role==='Admin'?top(-4,SVG.gear,'Kelola Tim'):'');
  h+=`<div class="slbl">Data</div>`;
  for(const [g,f] of GROUPS){
@@ -703,6 +703,7 @@ function show(i){
  if(i===-6) return lapView('b');
  if(i===-8) return pipeView();
  if(i===-9) return digView();
+ if(i===-10) return cmpView();
  if(i<0) return overview();
  const s=DATA[i];
  $('crumb').textContent=groupOf(s.name);
@@ -1441,6 +1442,177 @@ function csvDig(){
  const t=rows.map(r=>r.map(q).join(',')).join('\r\n');
  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+t],{type:'text/csv'}));a.download='Laporan Digital '+(DG.pt||'SWM+GAN')+' '+DG.from+'_'+DG.to+'.csv';a.click();
 }
+// ==== Perbandingan (menu sendiri) ====
+const CP={src:'akt',met:'fu',scale:'m',n:8,end:'',by:'mkt',pt:'',hide:[]};
+const CPSRC={akt:'Aktivitas Tim',fun:'Funnel Lead',dig:'Laporan Digital'};
+const CPMET={
+ akt:[['fu','Total Follow-up (Call+Email+WA)'],['all','Semua aktivitas'],['baru','Data Baru'],['kontak','New Kontak'],['update','Update Data'],['call','Call'],['email','Email'],['wa','WhatsApp'],['lead','New Lead']],
+ fun:[['dat','Lead Masuk'],['hub','Dihubungi'],['res','Respon'],['qua','Qualified'],['ser','Diserahkan ke Sales']],
+ dig:[['reach','Reach'],['dm','Inquiry / DM'],['post','Posting'],['fol','Follower Baru'],['lead','Lead dari digital'],['qua','Qualified dari digital']]};
+const CPBY={akt:[['mkt','Per marketing']],fun:[['mkt','Per marketing'],['pt','Per PT'],['src','Per sumber lead']],dig:[['kanal','Per kanal'],['pt','Per PT']]};
+const CPN={h:[[7,'7 hari'],[14,'14 hari'],[30,'30 hari']],m:[[4,'4 minggu'],[8,'8 minggu'],[12,'12 minggu']],b:[[3,'3 bulan'],[6,'6 bulan'],[12,'12 bulan']]};
+const CPUNIT={h:['hari','kemarin'],m:['minggu','minggu lalu'],b:['bulan','bulan lalu']};
+const lastDay=ym=>{const [y,m]=ym.split('-').map(Number);return ym+'-'+String(new Date(y,m,0).getDate()).padStart(2,'0')};
+const ddmm=iso=>iso.slice(8,10)+'/'+iso.slice(5,7);
+function cpBuckets(){
+ const end=CP.end||todayISO(),out=[];
+ if(CP.scale==='h')for(let i=CP.n-1;i>=0;i--){const d=shiftISO(end,-i);out.push({f:d,t:d,l:ddmm(d),L:tglPanjang(d)})}
+ else if(CP.scale==='m'){const w=mingguOf(end)[0];for(let i=CP.n-1;i>=0;i--){const f=shiftISO(w,-7*i),t=shiftISO(f,6);out.push({f,t,l:ddmm(f),L:tglPanjang(f)+' – '+tglPanjang(t)})}}
+ else{const ym=end.slice(0,7);for(let i=CP.n-1;i>=0;i--){const m=ymAdd(ym,-i);out.push({f:m+'-01',t:lastDay(m),l:ymLbl(m),L:blnPanjang(m)})}}
+ return out;
+}
+const titleCase=n=>String(n||'').replace(/\b\w/g,c=>c.toUpperCase());
+function cpItems(){
+ const it=[],ptOk2=v=>!CP.pt||v===CP.pt||v==='Keduanya';
+ if(CP.src==='akt'){
+  AKT.forEach(a=>{const j=a.jenis;if(CP.met==='all'||j===CP.met||(CP.met==='fu'&&['call','email','wa'].includes(j)))it.push({d:a.tgl,g:titleCase(a.nama.toLowerCase()),v:1})});
+ }else if(CP.src==='fun'){
+  const F={dat:'tData',hub:'tHub',res:'tRes',qua:'tQua',ser:'tSer'}[CP.met];
+  LEAD.filter(l=>ptOk2(l.pt)).forEach(l=>{if(!l[F])return;const g=CP.by==='pt'?(l.pt||'(PT belum diisi)'):CP.by==='src'?(l.sumber||'(sumber belum diisi)'):titleCase(l.mkt.toLowerCase());it.push({d:l[F],g,v:1})});
+ }else{
+  if(['lead','qua'].includes(CP.met)){const F=CP.met==='lead'?'tData':'tQua';
+   LEAD.filter(l=>KANALL.includes(l.sumber)&&ptOk2(l.pt)).forEach(l=>{if(l[F])it.push({d:l[F],g:CP.by==='pt'?(l.pt||'(PT belum diisi)'):l.sumber,v:1})})}
+  else DIG.filter(x=>!CP.pt||x.pt===CP.pt).forEach(x=>it.push({d:x.tgl,g:CP.by==='pt'?x.pt:x.kanal,v:+x[CP.met]||0}));
+ }
+ return it;
+}
+function cpData(){
+ const B=cpBuckets(),it=cpItems(),M={};
+ let groups=[...new Set(it.map(x=>x.g))];
+ if(CP.src==='akt')salesList().forEach(n=>{const t=titleCase(n.toLowerCase());if(!groups.includes(t))groups.push(t)});
+ if(CP.src==='dig'&&CP.by==='kanal')KANALL.forEach(k=>{if(!groups.includes(k))groups.push(k)});
+ groups.forEach(g=>M[g]=B.map(()=>0));
+ it.forEach(x=>{const i=B.findIndex(b=>x.d>=b.f&&x.d<=b.t);if(i>=0&&M[x.g])M[x.g][i]+=x.v});
+ // periode sekarang vs sebelumnya (bila periode terakhir masih berjalan → dibanding s.d. hari yang sama)
+ const cur=B[B.length-1],prv=B[B.length-2],today=todayISO();
+ let cw=[cur.f,cur.t],pw=prv?[prv.f,prv.t]:null,partial=false;
+ if(prv&&CP.scale!=='h'&&today>=cur.f&&today<=cur.t&&today<cur.t){partial=true;const k=dayDiff(cur.f,today);cw=[cur.f,today];pw=[prv.f,[shiftISO(prv.f,k),prv.t].sort()[0]]}
+ const sumW=(g,w)=>it.filter(x=>x.g===g&&x.d>=w[0]&&x.d<=w[1]).reduce((a,x)=>a+x.v,0);
+ const C={},P={};groups.forEach(g=>{C[g]=sumW(g,cw);P[g]=pw?sumW(g,pw):0});
+ groups.sort((a,b)=>C[b]-C[a]||M[b].reduce((x,y)=>x+y,0)-M[a].reduce((x,y)=>x+y,0)||a.localeCompare(b));
+ const vis=groups.filter(g=>!CP.hide.includes(g));
+ return {B,M,groups,vis,C,P,cw,pw,partial};
+}
+function lineSVG(D){
+ const W=1040,H=300,pl=52,pr=16,pt=16,pb=34,n=D.B.length,cols=D.vis.slice(0,10);
+ const tot=D.B.map((_,i)=>D.vis.reduce((a,g)=>a+D.M[g][i],0));
+ const raw=Math.max(1,...cols.flatMap(g=>D.M[g])),pw10=Math.pow(10,Math.floor(Math.log10(raw/4))),step=[1,2,2.5,5,10].map(k=>k*pw10).find(k=>raw/k<=5)||10*pw10,mx=Math.max(step,Math.ceil(raw/step)*step);
+ const X=i=>pl+(n<2?(W-pl-pr)/2:i*(W-pl-pr)/(n-1)),Y=v=>H-pb-(v/mx)*(H-pt-pb);
+ let s=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;font-family:inherit">`;
+ for(let v=0;v<=mx+1e-9;v+=Math.max(step,1)){s+=`<line x1="${pl}" x2="${W-pr}" y1="${Y(v)}" y2="${Y(v)}" stroke="#eef1f6"/><text x="${pl-8}" y="${Y(v)+4}" text-anchor="end" font-size="11" fill="#8a94a6">${Number(v).toLocaleString('id')}</text>`}
+ D.B.forEach((b,i)=>{s+=`<text x="${X(i)}" y="${H-10}" text-anchor="${i===n-1&&D.partial?'end':'middle'}" font-size="11.5" fill="#5b6678">${esc(b.l)}${i===n-1&&D.partial?' (berjalan)':''}</text>`});
+ cols.forEach((g,j)=>{const c=PCOL[D.groups.indexOf(g)%PCOL.length],v=D.M[g];
+  const solid=D.partial&&n>1?v.slice(0,n-1):v;s+=`<polyline points="${solid.map((y,i)=>X(i)+','+Y(y)).join(' ')}" fill="none" stroke="${c}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>`;
+  if(D.partial&&n>1)s+=`<line x1="${X(n-2)}" y1="${Y(v[n-2])}" x2="${X(n-1)}" y2="${Y(v[n-1])}" stroke="${c}" stroke-width="2.5" stroke-dasharray="6 5"/>`;
+  v.forEach((y,i)=>{s+=`<circle cx="${X(i)}" cy="${Y(y)}" r="${i===n-1?5:3.5}" fill="#fff" stroke="${c}" stroke-width="2.5"><title>${esc(g)} · ${esc(D.B[i].L)}: ${y}</title></circle>`});
+  });
+ s+='</svg>';
+ return s+`<div style="display:flex;flex-wrap:wrap;gap:14px;font-size:13px;margin-top:4px">${cols.map(g=>`<span style="display:inline-flex;align-items:center;gap:6px"><i style="width:14px;height:4px;border-radius:2px;background:${PCOL[D.groups.indexOf(g)%PCOL.length]};display:inline-block"></i>${esc(g)}</span>`).join('')}<span style="color:#64748b">Total per ${CPUNIT[CP.scale][0]}: ${tot.map(v=>Number(v).toLocaleString('id')).join(' · ')}</span></div>`;
+}
+function barSVG(D,ul){
+ const rows=D.vis.slice(0,12),mx=Math.max(1,...rows.flatMap(g=>[D.C[g],D.P[g]]));
+ return `<div style="display:grid;gap:10px">${rows.map((g,i)=>{const c=PCOL[D.groups.indexOf(g)%PCOL.length],a=D.C[g],b=D.P[g],d=a-b;
+  return `<div style="display:grid;grid-template-columns:150px 1fr 150px;align-items:center;gap:12px">
+   <div style="font-weight:700;font-size:14.5px;display:flex;align-items:center;gap:8px"><span style="width:22px;height:22px;border-radius:50%;background:${c};color:#fff;font-size:11px;display:inline-flex;align-items:center;justify-content:center;font-weight:800">${i+1}</span>${esc(g)}</div>
+   <div><div style="height:16px;border-radius:8px;background:${c};width:${Math.max(a?2:0,a/mx*100)}%;min-width:${a?'4px':'0'}"></div><div style="height:9px;border-radius:6px;background:${c};opacity:.28;width:${b/mx*100}%;margin-top:4px"></div></div>
+   <div style="font-size:13.5px;text-align:right"><b style="font-size:16px">${Number(a).toLocaleString('id')}</b> <span style="color:#94a3b8">/ ${Number(b).toLocaleString('id')}</span><br><span style="font-weight:700;color:${d>0?'#15803d':d<0?'#b42318':'#64748b'}">${d>0?'▲ +':d<0?'▼ ':'= '}${d?Number(d).toLocaleString('id'):'sama'}${d&&b?' ('+(d>0?'+':'')+Math.round(d/b*100)+'%)':d&&a?' (baru)':''}</span></div></div>`}).join('')||'<div style="color:#94a3b8">Belum ada data</div>'}
+ <div style="font-size:12.5px;color:#64748b;display:flex;gap:16px"><span><i style="display:inline-block;width:18px;height:9px;border-radius:4px;background:#475569;vertical-align:middle"></i> ${esc(ul[0])}</span><span><i style="display:inline-block;width:18px;height:6px;border-radius:4px;background:#475569;opacity:.3;vertical-align:middle"></i> ${esc(ul[1])}</span></div></div>`;
+}
+function cpLabels(D){
+ const u=CPUNIT[CP.scale],nm=CP.scale==='h'?'Hari ini':CP.scale==='m'?'Minggu ini':'Bulan ini';
+ const f=w=>w?(w[0]===w[1]?tglPanjang(w[0]):tglPanjang(w[0])+' – '+tglPanjang(w[1])):'';
+ const isNow=(CP.end||todayISO())===todayISO();
+ return {cur:(isNow?nm:'Periode terakhir')+(D.partial?' (s.d. '+tglPanjang(D.cw[1])+')':''),prev:u[1]+(D.partial?' (s.d. tgl sama)':''),curR:f(D.cw),prevR:f(D.pw),unit:u[0]};
+}
+function cmpSummary(){
+ const D=cpData(),Lb=cpLabels(D),metL=(CPMET[CP.src].find(m=>m[0]===CP.met)||['',''])[1],byL=(CPBY[CP.src].find(m=>m[0]===CP.by)||['',''])[1];
+ const tc=D.vis.reduce((a,g)=>a+D.C[g],0),tp=D.vis.reduce((a,g)=>a+D.P[g],0);
+ const best=D.vis.find(g=>D.C[g]>0);
+ const ups=D.vis.map(g=>[g,D.C[g]-D.P[g]]).sort((a,b)=>b[1]-a[1]);
+ const up=ups.find(x=>x[1]>0),dn=ups.slice().reverse().find(x=>x[1]<0);
+ const nf2=v=>Number(v||0).toLocaleString('id');
+ const kes=[];
+ kes.push(`<b>${esc(metL)}</b> — ${esc(Lb.cur)}: <b>${nf2(tc)}</b>, ${tc>tp?'naik':tc<tp?'turun':'sama dengan'} ${tc!==tp?'<b>'+nf2(Math.abs(tc-tp))+'</b>'+(tp?' ('+Math.round((tc-tp)/tp*100)+'%)':'')+' dibanding':''} ${esc(Lb.prev)} (${nf2(tp)}).`);
+ if(best)kes.push(`Tertinggi: <b>${esc(best)}</b> (${nf2(D.C[best])}${tc?', '+Math.round(D.C[best]/tc*100)+'% dari total':''}).`);
+ if(up)kes.push(`Naik paling banyak: <b>${esc(up[0])}</b> (+${nf2(up[1])}).`);
+ if(dn)kes.push(`Turun paling banyak: <b>${esc(dn[0])}</b> (${nf2(dn[1])}).`);
+ const avg=g=>D.M[g].reduce((a,b)=>a+b,0)/D.B.length;
+ const mxCell=Math.max(1,...D.vis.flatMap(g=>D.M[g]));
+ const th='padding:10px 10px;font-size:12.5px;font-weight:700;color:#fff!important;background:#0b1f4d!important;text-align:center;border:0;text-transform:none;letter-spacing:0;white-space:nowrap';
+ const td='padding:9px 10px;text-align:center;font-size:14px';
+ const tbl=`<table style="width:100%;border-collapse:separate;border-spacing:0;border:1px solid #e2e8f0;border-radius:14px;overflow:hidden">
+  <thead><tr><th style="${th};text-align:left">#</th><th style="${th};text-align:left">${esc(titleCase(byL.replace('Per ','')))}</th>${D.B.map(b=>`<th style="${th}">${esc(b.l)}</th>`).join('')}<th style="${th};background:#14532d!important">Total</th><th style="${th};background:#14532d!important">Rata²/${Lb.unit}</th><th style="${th};background:#7c2d12!important">${esc(Lb.cur.split(' (')[0])}</th><th style="${th};background:#7c2d12!important">vs ${esc(CPUNIT[CP.scale][1])}</th><th style="${th};background:#7c2d12!important">Kontribusi</th></tr></thead><tbody>
+  ${D.vis.map((g,i)=>{const t=D.M[g].reduce((a,b)=>a+b,0),d=D.C[g]-D.P[g];return `<tr style="border-top:1px solid #e2e8f0"><td style="${td};color:#64748b">${i+1}</td><td style="${td};text-align:left;font-weight:700;white-space:nowrap"><i style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${PCOL[D.groups.indexOf(g)%PCOL.length]};margin-right:8px"></i>${esc(g)}</td>
+   ${D.M[g].map(v=>`<td style="${td};background:rgba(29,78,216,${(v/mxCell*.22).toFixed(3)});${v?'':'color:#cbd5e1'}">${nf2(v)}</td>`).join('')}
+   <td style="${td};font-weight:800;background:#f0fdf4">${nf2(t)}</td><td style="${td};background:#f0fdf4">${(Math.round(avg(g)*10)/10).toLocaleString('id')}</td>
+   <td style="${td};font-weight:800;background:#fff7ed">${nf2(D.C[g])}</td><td style="${td};background:#fff7ed;font-weight:700;color:${d>0?'#15803d':d<0?'#b42318':'#64748b'};white-space:nowrap">${d>0?'▲ +':d<0?'▼ ':'= '}${d?nf2(d):'sama'}${d&&D.P[g]?' ('+(d>0?'+':'')+Math.round(d/D.P[g]*100)+'%)':d&&D.C[g]?' (baru)':''}</td><td style="${td};background:#fff7ed">${tc?Math.round(D.C[g]/tc*100)+'%':'–'}</td></tr>`}).join('')}
+  <tr style="background:#eef2ff;border-top:2px solid #c7d2fe"><td></td><td style="${td};text-align:left;font-weight:800">Total</td>${D.B.map((_,i)=>`<td style="${td};font-weight:800">${nf2(D.vis.reduce((a,g)=>a+D.M[g][i],0))}</td>`).join('')}<td style="${td};font-weight:800">${nf2(D.vis.reduce((a,g)=>a+D.M[g].reduce((x,y)=>x+y,0),0))}</td><td style="${td}">${(Math.round(D.vis.reduce((a,g)=>a+avg(g),0)*10)/10).toLocaleString('id')}</td><td style="${td};font-weight:800">${nf2(tc)}</td><td style="${td};font-weight:700">${tc-tp>0?'▲ +':tc-tp<0?'▼ ':'= '}${tc-tp?nf2(tc-tp):'sama'}${tc-tp&&tp?' ('+(tc-tp>0?'+':'')+Math.round((tc-tp)/tp*100)+'%)':''}</td><td style="${td}">100%</td></tr></tbody></table>`;
+ const card=(t,v,sub,dark)=>`<div style="border-radius:16px;padding:16px 18px;${dark?'background:linear-gradient(135deg,#0b1f4d,#1d3a8a);color:#fff':'background:#f8fafc;border:1px solid #e8edf5'}"><div style="font-size:14px;font-weight:700;color:${dark?'#c7d2fe':'#475569'}">${t}</div><div style="font-size:${String(v).length>10?28:42}px;font-weight:800;line-height:1.15;margin:4px 0;color:${dark?'#fbbf24':'#0b1f4d'}">${v}</div><div style="font-size:13px;color:${dark?'#c7d2fe':'#64748b'}">${sub}</div></div>`;
+ return `<div style="font-family:inherit;color:#0f172a;background:#fff;width:1100px">
+ <div style="height:8px;background:linear-gradient(90deg,#c8102e 0%,#f05a3c 30%,#1f7a3a 70%,#0b1f4d 100%)"></div>
+ <div style="padding:26px 36px 30px">
+ <div style="display:flex;justify-content:space-between;align-items:center;gap:20px">
+  <div style="display:flex;align-items:center;gap:22px"><div style="display:flex;align-items:center;gap:16px;padding-right:22px;border-right:2px solid #e2e8f0">${logoHdr(CP.pt)}</div>
+  <div><div style="font-size:13px;font-weight:700;color:#64748b;letter-spacing:.12em">LAPORAN PERBANDINGAN${CP.pt?' · '+CP.pt:''}</div><div style="font-size:28px;font-weight:800;color:#0b1f4d;line-height:1.15">${esc(metL)}</div><div style="font-size:14.5px;color:#475569">${esc(CPSRC[CP.src])} · ${esc(byL)} · ${CP.n} ${Lb.unit} terakhir</div></div></div>
+  <div style="background:#0b1f4d;color:#fff;border-radius:14px;padding:10px 18px;text-align:right"><div style="font-size:11.5px;letter-spacing:.12em;opacity:.75;font-weight:700">PERIODE</div><div style="font-size:17px;font-weight:800">${esc(D.B[0].L.split(' – ')[0])} – ${esc(D.B[D.B.length-1].L.split(' – ').pop())}</div></div></div>
+ <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:22px">
+  ${card(esc(Lb.cur.split(' (')[0]),nf2(tc),esc(Lb.curR))}
+  ${card('Sebelumnya',nf2(tp),esc(Lb.prev.split(' (')[0])+' · '+esc(Lb.prevR))}
+  ${card('Perubahan',(tc-tp>0?'+':'')+nf2(tc-tp),tp?((tc-tp>0?'▲ ':'▼ ')+Math.abs(Math.round((tc-tp)/tp*100))+'%'):(tc?'baru':'–'))}
+  ${card('Tertinggi',best?esc(best):'—',best?nf2(D.C[best])+' · '+(tc?Math.round(D.C[best]/tc*100):0)+'% dari total':'belum ada data',true)}
+ </div>
+ <div style="margin-top:18px;font-size:17.5px;line-height:1.55;background:#fff8e6;border-radius:12px;padding:12px 18px;border-left:5px solid #f5a300">${kes.join(' ')}</div>
+ <div style="margin-top:20px;border:1px solid #e2e8f0;border-radius:14px;padding:16px 18px"><div style="font-weight:800;font-size:16.5px;color:#0b1f4d;margin-bottom:8px">📈 Tren per ${esc(Lb.unit)} — ${esc(byL.replace('Per ','per '))}</div>${lineSVG(D)}</div>
+ <div style="margin-top:16px;border:1px solid #e2e8f0;border-radius:14px;padding:16px 18px"><div style="font-weight:800;font-size:16.5px;color:#0b1f4d;margin-bottom:12px">🏁 Peringkat ${esc(Lb.cur.split(' (')[0].toLowerCase())} vs ${esc(CPUNIT[CP.scale][1])}</div>${barSVG(D,[Lb.cur+' · '+Lb.curR,Lb.prev.split(' (')[0]+' · '+Lb.prevR])}</div>
+ <div style="margin-top:16px"><div style="font-weight:800;font-size:16.5px;color:#0b1f4d;margin-bottom:8px">📋 Detail per ${esc(Lb.unit)}</div>${tbl}</div>
+ <div style="margin-top:14px;font-size:12.5px;color:#94a3b8;display:flex;justify-content:space-between"><span>${D.partial?'Periode berjalan dibandingkan s.d. tanggal yang sama di periode sebelumnya.':'Perbandingan periode terakhir vs periode sebelumnya.'}</span><span>PT Sumi Win Mukti · Garuda Aluminium Nusantara · ${esc(new Date().toLocaleString('id'))}</span></div>
+ </div></div>`;
+}
+function cmpView(){
+ $('crumb').textContent='Laporan';$('title').innerHTML='Perbandingan';$('q').style.display='none';$('csv').style.display='none';
+ if(!CPMET[CP.src].some(m=>m[0]===CP.met))CP.met=CPMET[CP.src][0][0];
+ if(!CPBY[CP.src].some(m=>m[0]===CP.by))CP.by=CPBY[CP.src][0][0];
+ if(!CPN[CP.scale].some(m=>m[0]===CP.n))CP.n=CPN[CP.scale][1][0];
+ const sel=(id,arr,v)=>`<select id="${id}">${arr.map(([k,l])=>`<option value="${k}" ${String(k)===String(v)?'selected':''}>${esc(l)}</option>`).join('')}</select>`;
+ $('filters').innerHTML=`<label>Data<select id="cpsrc">${Object.entries(CPSRC).map(([k,l])=>`<option value="${k}" ${CP.src===k?'selected':''}>${l}</option>`).join('')}</select></label>
+ <label>Metrik${sel('cpmet',CPMET[CP.src],CP.met)}</label>
+ <label>Skala${sel('cpsc',[['h','Harian'],['m','Mingguan'],['b','Bulanan']],CP.scale)}</label>
+ <label>Rentang${sel('cpn',CPN[CP.scale],CP.n)}</label>
+ <label>Sampai<input type="date" id="cpend" value="${CP.end||todayISO()}"></label>
+ <label>Bandingkan${sel('cpby',CPBY[CP.src],CP.by)}</label>
+ ${CP.src==='akt'?'':`<label>PT${sel('cppt',[['','SWM + GAN'],['SWM','SWM'],['GAN','GAN']],CP.pt)}</label>`}
+ <button class="ghost" onclick="dlCmp()">⬇ Download gambar</button><button class="ghost" onclick="printCmp()">🖨 Cetak / PDF</button><button class="ghost" onclick="csvCmp()">📊 Export Excel</button>`;
+ $('cpsrc').onchange=e=>{CP.src=e.target.value;CP.hide=[];cmpView()};$('cpmet').onchange=e=>{CP.met=e.target.value;drawCmp()};
+ $('cpsc').onchange=e=>{CP.scale=e.target.value;CP.n=CPN[CP.scale][1][0];cmpView()};$('cpn').onchange=e=>{CP.n=+e.target.value;drawCmp()};
+ $('cpend').onchange=e=>{CP.end=e.target.value===todayISO()?'':e.target.value;drawCmp()};$('cpby').onchange=e=>{CP.by=e.target.value;CP.hide=[];drawCmp()};
+ if($('cppt'))$('cppt').onchange=e=>{CP.pt=e.target.value;drawCmp()};
+ drawCmp();
+}
+function drawCmp(){
+ const D=cpData();
+ const chips=D.groups.map(g=>`<button class="ts${CP.hide.includes(g)?'':' on'}" data-g="${esc(g)}" style="${CP.hide.includes(g)?'':`background:${PCOL[D.groups.indexOf(g)%PCOL.length]};border-color:${PCOL[D.groups.indexOf(g)%PCOL.length]};color:#fff`}">${esc(g)}</button>`).join('');
+ $('content').innerHTML=`<div class="box" style="margin-bottom:12px"><div style="font-size:13px;font-weight:700;color:var(--mut);margin-bottom:6px">Tampilkan (klik untuk sembunyikan / munculkan):</div><div class="tsel" id="cpchips">${chips||'<span style="color:var(--mut)">Belum ada data</span>'}</div></div>
+ <div style="overflow:auto;background:#fff;border:1px solid var(--line);border-radius:14px">${cmpSummary()}</div>`;
+ $('cpchips').querySelectorAll('button').forEach(b=>b.onclick=()=>{const g=b.dataset.g;CP.hide=CP.hide.includes(g)?CP.hide.filter(x=>x!==g):[...CP.hide,g];drawCmp()});
+}
+function cpFile(){return 'Perbandingan '+(CPMET[CP.src].find(m=>m[0]===CP.met)||['',''])[1].replace(/[^\w ]+/g,'').trim()+' '+(CP.end||todayISO())}
+async function dlCmp(){
+ toast('Menyiapkan gambar…');let k;
+ try{await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');k=shotClone(cmpSummary());
+  const c=await html2canvas(k.firstElementChild,{scale:2,backgroundColor:'#ffffff',useCORS:true,windowWidth:1300});
+  const a=document.createElement('a');a.href=c.toDataURL('image/png');a.download=cpFile()+'.png';a.click();
+ }catch(e){toast('Gagal membuat gambar — pakai 🖨 Cetak / PDF')}finally{if(k)k.remove()}
+}
+function printCmp(){const k=shotClone(cmpSummary());k.style.zIndex='';setTimeout(()=>{window.print();k.remove()},100)}
+function csvCmp(){
+ const D=cpData(),Lb=cpLabels(D),q=v=>'"'+String(v??'').replace(/"/g,'""')+'"',metL=(CPMET[CP.src].find(m=>m[0]===CP.met)||['',''])[1];
+ const rows=[['LAPORAN PERBANDINGAN'],['Data',CPSRC[CP.src]],['Metrik',metL],['Bandingkan',(CPBY[CP.src].find(m=>m[0]===CP.by)||['',''])[1]],['PT',CP.pt||'SWM + GAN'],[Lb.cur,Lb.curR],['Pembanding',Lb.prev+' · '+Lb.prevR],[],
+  ['Nama',...D.B.map(b=>b.L),'Total','Rata-rata/'+Lb.unit,Lb.cur.split(' (')[0],'Sebelumnya','Selisih','Selisih %'],
+  ...D.vis.map(g=>{const t=D.M[g].reduce((a,b)=>a+b,0),d=D.C[g]-D.P[g];return [g,...D.M[g],t,Math.round(t/D.B.length*10)/10,D.C[g],D.P[g],d,D.P[g]?Math.round(d/D.P[g]*100)+'%':'']}),
+  ['Total',...D.B.map((_,i)=>D.vis.reduce((a,g)=>a+D.M[g][i],0)),D.vis.reduce((a,g)=>a+D.M[g].reduce((x,y)=>x+y,0),0),'',D.vis.reduce((a,g)=>a+D.C[g],0),D.vis.reduce((a,g)=>a+D.P[g],0)]];
+ const t=rows.map(r=>r.map(q).join(',')).join('\r\n');
+ const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['﻿'+t],{type:'text/csv'}));a.download=cpFile()+'.csv';a.click();
+}
 // ==== Kelola Tim (admin) ====
 let TEAM=null,TED=null;
 async function timApi(action,extra){const r=await post(getAPI(),JSON.stringify(Object.assign({action,u:AUTH.u,p:AUTH.p},extra||{})));
@@ -1562,7 +1734,7 @@ async function loadLive(keep){
    const sc=$('content').scrollTop;buildSide();
    if(cur>=0&&ni>=0){cur=ni;$('addbtn').style.display='';render()}
    else if(cur>=0){show(-1)}
-   else if(cur===-1)overview();else if(cur===-3)rLog();else if(cur===-5||cur===-6||cur===-7)drawRep();else if(cur===-8)drawPipe();else if(cur===-9)drawDig();else if(cur===-2)gsearch();
+   else if(cur===-1)overview();else if(cur===-3)rLog();else if(cur===-5||cur===-6||cur===-7)drawRep();else if(cur===-8)drawPipe();else if(cur===-9)drawDig();else if(cur===-10)drawCmp();else if(cur===-2)gsearch();
    $('content').scrollTop=sc;
    if(changed&&keep==='auto')toast('🔄 Ada data baru — tampilan diperbarui');
   }
