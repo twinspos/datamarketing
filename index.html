@@ -1112,22 +1112,23 @@ function ppList(){
  const inP=l=>!ppOn()||[l.tData,l.tHub,l.tRes,l.tQua,l.tSer,(l.upd||'').slice(0,10)].some(inR);
  return {base,list:base.filter(l=>inP(l)&&(!PP.t||l.tahap===PP.t)).sort((a,b)=>TAHAPL.indexOf(b.tahap)-TAHAPL.indexOf(a.tahap)||(a.upd<b.upd?1:-1))};
 }
+const tLbl=t=>t==='Data'?(ppOn()?'Lead Masuk':'Belum Dihubungi'):t;
 function drawPipe(){
  const {base,list}=ppList();
  const cnt=ppHit(base,'');
  const ms=[...new Set(base.map(l=>l.mkt))].sort();
  const per=ms.map(n=>{const c=ppHit(base.filter(l=>l.mkt.toLowerCase()===n.toLowerCase()),n);const tot=TAHAPL.reduce((a,t)=>a+c[t],0);if(!tot)return '';
   return `<tr><td>${esc(n)}</td>${TAHAPL.map(t=>`<td class="${c[t]?'nz':''}">${c[t]}</td>`).join('')}${ppOn()?'':`<td><b>${tot}</b></td>`}</tr>`}).join('');
- const sub=ppOn()?'<b>Akumulasi</b>: jumlah lead yang mencapai tiap tahap dalam periode ini (Data = lead masuk)':'<b>Posisi sekarang</b>: lead yang sudah naik tahap tidak dihitung lagi di tahap sebelumnya';
+ const sub=ppOn()?'<b>Akumulasi</b>: jumlah lead yang mencapai tiap tahap dalam periode ini':`<b>Posisi sekarang</b>: total ${base.length} lead, dibagi menurut tahapnya saat ini`;
  $('content').innerHTML=`<div id="pipecard" style="background:var(--bg,#f6f7fb);padding:4px">
  <div class="box" style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div><div style="font-weight:800;font-size:18px;color:#0b1f4d">Funnel Lead Marketing → Sales</div><div style="color:var(--mut);font-size:13px">${sub}${PP.m?' · Marketing: <b>'+esc(PP.m)+'</b>':''}</div></div>
  <div style="background:#14213a;color:#fff;border-radius:12px;padding:8px 14px;font-weight:800">📅 ${esc(ppLabel())}</div></div>
- <div class="pcards">${TAHAPL.map(t=>`<div class="pc ${PP.t===t?'on':''}" data-t="${esc(t)}"><span class="tp t-${tslug(t)}" style="margin:0">${esc(t)}</span><b>${cnt[t]}</b></div>`).join('')}</div>
- <div class="box"><div class="sec" style="margin-top:0">Per marketing</div><div class="tw"><table class="rtab"><thead><tr><th>Marketing</th>${TAHAPL.map(t=>`<th>${esc(t)}</th>`).join('')}${ppOn()?'':'<th>Total</th>'}</tr></thead><tbody>${per||'<tr><td colspan="8" class="blank">Belum ada data di periode ini</td></tr>'}</tbody></table></div></div>
+ <div class="pcards" style="grid-template-columns:repeat(${ppOn()?6:7},minmax(0,1fr))">${ppOn()?'':`<div class="pc ${PP.t?'':'on'}" data-t="" style="background:#14213a;color:#fff"><span style="font-size:12px;font-weight:700">Total Lead</span><b>${base.length}</b></div>`}${TAHAPL.map(t=>`<div class="pc ${PP.t===t?'on':''}" data-t="${esc(t)}"><span class="tp t-${tslug(t)}" style="margin:0">${esc(tLbl(t))}</span><b>${cnt[t]}</b></div>`).join('')}</div>
+ <div class="box"><div class="sec" style="margin-top:0">Per marketing</div><div class="tw"><table class="rtab"><thead><tr><th>Marketing</th>${TAHAPL.map(t=>`<th>${esc(tLbl(t))}</th>`).join('')}${ppOn()?'':'<th>Total Lead</th>'}</tr></thead><tbody>${per||'<tr><td colspan="8" class="blank">Belum ada data di periode ini</td></tr>'}</tbody></table></div></div>
  <div class="box"><div class="sec" style="margin-top:0">${PP.t?esc(PP.t):'Daftar lead'} — ${list.length}${PP.t?' <a href="#" onclick="PP.t=\'\';drawPipe();return false" style="font-size:12px">(tampilkan semua)</a>':''}</div>
  <div class="tw"><table class="rtab"><thead><tr><th>Customer</th><th>Tahap</th><th>Marketing</th><th>Pakai Ingot</th><th>Alloy</th><th>Volume/bln</th><th>Supplier Sekarang</th><th>Diserahkan Ke</th><th>Tgl Masuk</th><th>Tgl Dihubungi</th><th>Tgl Qualified</th><th>Tgl Serah</th><th>Catatan</th></tr></thead><tbody>
  ${list.map(l=>`<tr style="cursor:pointer" onclick="openLead(null,${esc(JSON.stringify(l.id))})"><td><b>${esc(l.cust)}</b></td><td>${tpill(l)}</td><td>${esc(l.mkt)}</td><td>${esc(l.ingot)}</td><td>${esc(l.alloy)}</td><td>${esc(l.vol)}</td><td>${esc(l.supplier)}</td><td>${esc(l.ke)}</td><td>${esc(l.tData)}</td><td>${esc(l.tHub)}</td><td>${esc(l.tQua)}</td><td>${esc(l.tSer)}</td><td>${esc(l.cat)}</td></tr>`).join('')||'<tr><td colspan="13" class="blank">Belum ada. Lead otomatis masuk saat ⭐ New Lead dicatat, atau klik 🎯 di baris customer (di sheet mana pun) untuk mengisi tahap lead.</td></tr>'}</tbody></table></div></div></div>`;
- $('content').querySelectorAll('.pc').forEach(c=>c.onclick=()=>{PP.t=PP.t===c.dataset.t?'':c.dataset.t;drawPipe()});
+ $('content').querySelectorAll('.pc').forEach(c=>c.onclick=()=>{PP.t=(!c.dataset.t||PP.t===c.dataset.t)?'':c.dataset.t;drawPipe()});
 }
 function ppFile(){return 'Funnel Lead '+(ppOn()?(PP.from||'awal')+'_'+(PP.to||'sekarang'):'semua')+(PP.m?' '+PP.m:'')}
 // ringkasan gambar yang mudah dibaca (dipakai untuk Download gambar & Cetak)
