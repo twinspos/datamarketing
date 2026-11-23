@@ -165,8 +165,8 @@ header .note{display:inline-block;font-size:11px;background:var(--pri2);color:va
 .tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 input,select,button{border-radius:9px;padding:8px 12px}
 button{font-weight:600;box-shadow:0 1px 2px rgba(15,27,45,.06)}
-button:not(.ghost):not(.eb):not(.abtn):not(.x){background:linear-gradient(135deg,#1d4ed8,#2563eb);border-color:#1d4ed8}
-button:not(.ghost):not(.eb):not(.abtn):not(.x):hover{filter:brightness(1.08)}
+button:not(.ghost):not(.eb):not(.abtn):not(.x):not(.ts){background:linear-gradient(135deg,#1d4ed8,#2563eb);border-color:#1d4ed8}
+button:not(.ghost):not(.eb):not(.abtn):not(.x):not(.ts):hover{filter:brightness(1.08)}
 button.ghost:hover{border-color:#c9d3e6;background:#f7f9fc}
 .filters{padding:12px 24px;gap:10px}
 .content{padding:22px 24px}
@@ -269,6 +269,14 @@ tr:hover{background:#f1f5ff}
 .ahist{max-height:200px;overflow:auto;border-top:1px solid var(--line);margin-top:6px;padding-top:6px}
 .ahist div{display:flex;gap:8px;align-items:center;font-size:12.5px;padding:5px 0;border-bottom:1px dashed #edf0f5}
 .ahist .x{margin-left:auto;border:0;background:none;color:#b42318;cursor:pointer;padding:2px 6px;box-shadow:none}
+.tp{display:inline-block;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:9px;white-space:nowrap;margin-left:4px;vertical-align:middle}
+.t-data{background:#eef2f7;color:#475569}.t-dihubungi{background:#e5edff;color:#1d4ed8}.t-respon{background:#fff3d6;color:#a16207}.t-qualified{background:#dcfce7;color:#15803d}.t-diserahkan{background:#14213a;color:#fff}.t-tidak{background:#fee2e2;color:#b42318}
+.tsel{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 4px}.tsel button{box-shadow:none;border:1.5px solid var(--line);background:#fff;color:var(--ink);padding:6px 12px;border-radius:20px;font-weight:700;font-size:12.5px}
+.tsel button.on{border-color:#1d4ed8;background:#1d4ed8;color:#fff}
+.pcards{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-bottom:14px}.pcards .pc{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;cursor:pointer}
+.pcards .pc b{display:block;font-size:26px;margin-top:4px}.pcards .pc.on{outline:2px solid #1d4ed8}
+.box+.box{margin-top:12px}.rtab td.nz{font-weight:800}
+.funnel{margin:16px 0 4px}.funnel h4{margin:0 0 8px;font-size:15px;color:#0b1f4d}
 .jtag{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:9px;white-space:nowrap}
 .j-call{background:#e5edff;color:#1d4ed8}.j-email{background:#fff3d6;color:#a16207}.j-wa{background:#dcfce7;color:#15803d}.j-lead{background:#fde7f3;color:#be185d}.j-kontak{background:#ede9fe;color:#6d28d9}.j-baru{background:#e0f2fe;color:#0369a1}.j-update{background:#f3e8ff;color:#7c3aed}
 .adet{margin:18px auto 0;width:1100px;max-width:100%}
@@ -364,6 +372,26 @@ tr:hover{background:#f1f5ff}
  <div class="ahist" id="ahist"></div>
  <div class="act" style="margin-top:12px"><span class="msg" id="amsg"></span><button class="ghost" id="abatal">Tutup</button></div>
 </div></div>
+<div class="modal" id="ldmod"><div class="mbox">
+ <h3>🎯 Status lead</h3>
+ <p id="ldsub" style="margin-bottom:4px"></p>
+ <div class="fg">
+  <label class="full" id="ldcustw">Nama customer / prospek<input id="ldcust" list="acustdl" placeholder="mis. PT Contoh Logam"></label>
+  <label id="ldmktw">Marketing pemegang lead<select id="ldmkt"></select></label>
+ </div>
+ <div style="font-weight:700;font-size:13px;margin-top:10px">Tahap</div>
+ <div class="tsel" id="ldtahap"></div>
+ <div class="fg">
+  <label>Pakai ingot aluminium?<select id="ldingot"><option value="">—</option><option>Ya</option><option>Tidak</option><option>Belum tahu</option></select></label>
+  <label>Alloy yang dipakai<input id="ldalloy" placeholder="mis. ADC12, A356"></label>
+  <label>Perkiraan volume / bulan<input id="ldvol" placeholder="mis. 50 ton"></label>
+  <label>Supplier sekarang<input id="ldsup" placeholder="mis. supplier lokal / impor"></label>
+  <label class="full" id="ldkew">Diserahkan ke sales<input id="ldke" list="ldkedl" placeholder="nama sales penerima"><datalist id="ldkedl"></datalist></label>
+  <label class="full">Catatan<input id="ldcat" maxlength="500" placeholder="mis. minta sampel, kontak purchasing Bu Rina"></label>
+ </div>
+ <div class="meta" id="ldtgl" style="margin:8px 0 0"></div>
+ <div class="act" style="margin-top:12px"><span class="msg" id="ldmsg"></span><button class="ghost" id="ldbatal">Tutup</button><button id="ldsimpan">Simpan</button></div>
+</div></div>
 <div class="modal" id="lmod"><div class="mbox">
  <h3>📝 Keterangan harian</h3>
  <p>Angka aktivitas terhitung otomatis dari tombol ⚡. Di sini cukup isi keterangan (mis. sedang mengerjakan apa).</p>
@@ -407,7 +435,7 @@ tr:hover{background:#f1f5ff}
 <script>
 let DATA=[];
 const OFFLINE=DATA;
-let LOG=null,LAP=[],TIMN=[],AKT=[]; // riwayat update dari Google Sheets
+let LOG=null,LAP=[],TIMN=[],AKT=[],LEAD=[],TAHAPL=['Data','Dihubungi','Respon','Qualified','Diserahkan','Tidak Cocok'],SALEST=[]; // riwayat update dari Google Sheets
 // URL Web App Apps Script bisa juga ditulis langsung di sini:
 const DEFAULT_API='';
 // ==== pengolah data sheet ====
@@ -539,6 +567,7 @@ function buildSide(){
  <div class="brand"><div><h1>Marketing Database</h1><div class="sub">SWM · GAN — ${DATA.length} sheet · ${DATA.reduce((a,s)=>a+s.rows.length,0).toLocaleString('id')} baris data</div></div></div>`;
  h+=`<div class="nav top ${cur===-1?'on':''}" onclick="show(-1)" style="margin-top:10px"><span class="ic">${SVG.chart}</span><span class="lbl">Ringkasan</span></div>`;
  h+=`<div class="nav top ${cur===-3?'on':''}" onclick="show(-3)"><span class="ic">${SVG.clock}</span><span class="lbl">Riwayat Update</span>${LOG&&LOG.length?`<span class="n">${LOG.length}</span>`:''}</div>`;
+ h+=`<div class="nav top ${cur===-8?'on':''}" onclick="show(-8)"><span class="ic">${SVG.users}</span><span class="lbl">Pipeline Lead</span>${LEAD.length?`<span class="n">${LEAD.length}</span>`:''}</div>`;
  h+=`<div class="nav top ${cur===-5?'on':''}" onclick="show(-5)"><span class="ic">${SVG.clip}</span><span class="lbl">Laporan Harian</span></div>`;
  h+=`<div class="nav top ${cur===-7?'on':''}" onclick="show(-7)"><span class="ic">${SVG.clip}</span><span class="lbl">Laporan Mingguan</span></div>`;
  h+=`<div class="nav top ${cur===-6?'on':''}" onclick="show(-6)"><span class="ic">${SVG.clip}</span><span class="lbl">Laporan Bulanan</span></div>`;
@@ -597,6 +626,7 @@ function show(i){
  if(i===-5) return lapView('h');
  if(i===-7) return lapView('m');
  if(i===-6) return lapView('b');
+ if(i===-8) return pipeView();
  if(i<0) return overview();
  const s=DATA[i];
  $('crumb').textContent=groupOf(s.name);
@@ -626,7 +656,7 @@ function render(){
  h+='</tr></thead><tbody>';
  const lim=rs.slice(0,1500);
  const canEd=!!s.ri;
- for(const [r,k] of lim){h+=`<tr${canEd?` class="ed" ondblclick="editRow(${k})"`:''}><td class="rn" style="white-space:nowrap">${canEd?`<button class="eb" title="Edit" onclick="event.stopPropagation();editRow(${k})">✏️</button><button class="eb ak${aktCount(s,k)?' has':''}" title="Catat aktivitas (call/email/WA/lead)" onclick="event.stopPropagation();openAkt(${k})">⚡${aktCount(s,k)||''}</button>`:''}${k+1}</td>`+r.map(v=>`<td>${cell(v,q)}</td>`).join('')+'</tr>'}
+ for(const [r,k] of lim){h+=`<tr${canEd?` class="ed" ondblclick="editRow(${k})"`:''}><td class="rn" style="white-space:nowrap">${canEd?`<button class="eb" title="Edit" onclick="event.stopPropagation();editRow(${k})">✏️</button><button class="eb ak${aktCount(s,k)?' has':''}" title="Catat aktivitas (call/email/WA/lead)" onclick="event.stopPropagation();openAkt(${k})">⚡${aktCount(s,k)||''}</button><button class="eb" title="Status lead (tahap, kualifikasi, serah ke sales)" onclick="event.stopPropagation();openLead(${k})">🎯</button>`:''}${k+1}${tpill(leadOf(custOf(s,k)))}</td>`+r.map(v=>`<td>${cell(v,q)}</td>`).join('')+'</tr>'}
  h+='</tbody></table></div>';
  if(rs.length>1500)h+=`<div class="meta">Hanya 1500 baris pertama yang ditampilkan — gunakan pencarian/filter.</div>`;
  $('content').innerHTML=h;
@@ -769,7 +799,15 @@ function repData(){
   const hari=new Set(ak.map(a=>a.tgl)).size;
   const r={ket:REPM!=='h'?('Aktif '+hari+' hari'):(l?l.ket:''),hari};LK.forEach(([k])=>r[k]=ak.filter(a=>a.jenis===k).length);return {nama:n,r,ak}});
  const tot={};LK.forEach(([k])=>tot[k]=rows.reduce((a,x)=>a+(x.r?+x.r[k]||0:0),0));
- return {rows,tot,fu:tot.call+tot.email+tot.wa};
+ // funnel lead: dihubungi (customer unik yg di-call/email/WA) → respon → qualified → diserahkan
+ const fn=[...names];LEAD.forEach(l=>{if([l.tRes,l.tQua,l.tSer].some(inPer)&&!fn.some(n=>n.toLowerCase()===l.mkt.toLowerCase()))fn.push(l.mkt)});
+ const fun=fn.map(n=>{const me=x=>x.toLowerCase()===n.toLowerCase();
+  const hub=new Set(AKT.filter(a=>inPer(a.tgl)&&me(a.nama)&&['call','email','wa'].includes(a.jenis)).map(a=>normC(a.cust)||a.id)).size;
+  const L=LEAD.filter(l=>me(l.mkt));
+  const f={nama:n,hub,res:L.filter(l=>inPer(l.tRes)).length,qua:L.filter(l=>inPer(l.tQua)).length,ser:L.filter(l=>inPer(l.tSer)).length,
+   ke:[...new Set(L.filter(l=>inPer(l.tSer)).map(l=>l.ke))].join(', ')};return f}).filter(f=>f.hub||f.res||f.qua||f.ser);
+ const ft={hub:0,res:0,qua:0,ser:0};fun.forEach(f=>['hub','res','qua','ser'].forEach(k=>ft[k]+=f[k]));
+ return {rows,tot,fu:tot.call+tot.email+tot.wa,fun,ft};
 }
 function tglPanjang(iso){const [y,m,d]=iso.split('-').map(Number);return new Date(y,m-1,d).toLocaleDateString('id',{day:'numeric',month:'long',year:'numeric'})}
 function catatan(D){
@@ -777,6 +815,7 @@ function catatan(D){
  const who=k=>D.rows.filter(x=>x.r&&x.r[k]>0).sort((a,b)=>b.r[k]-a.r[k]).map(x=>`${x.nama} (${x.r[k]})`);
  ['email','call','wa'].forEach(k=>{if(D.tot[k])out.push(`<b>${lbl[k]} tercatat ${D.tot[k]} aktivitas: ${who(k).join(', ').replace(/, ([^,]*)$/,' dan $1')}.</b>`)});
  if(D.tot.lead)out.push(`<b>New Lead ${perKini()} sebanyak ${D.tot.lead}: ${who('lead').join(', ')}.</b>`);
+ if(D.ft.qua||D.ft.ser)out.push(`<b>Lead qualified ${D.ft.qua}, diserahkan ke sales ${D.ft.ser}</b> (dari ${D.ft.hub} customer yang dihubungi).`);
  if(D.tot.update)out.push(`Update data customer: ${D.tot.update} customer (${who('update').join(', ')}).`);
  if(D.tot.baru||D.tot.kontak)out.push(`Data baru ${D.tot.baru}, new kontak ${D.tot.kontak}.`);
  const nol=['baru','kontak','call','wa','email','lead'].filter(k=>!D.tot[k]).map(k=>lbl[k]);
@@ -794,6 +833,9 @@ function drawRep(){
   <div class="rdate"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M7 14h2M11 14h2M15 14h2M7 17h2M11 17h2"/></svg>${perLabel()}</div></div>
  <div class="tiles">${tiles}<div class="tile tot"><span class="ti"><svg viewBox="0 0 24 24" stroke="#f5b301"><path d="M4 20h16"/><rect x="5" y="13" width="3" height="6" fill="#f5b301"/><rect x="10.5" y="10" width="3" height="9" fill="#f5b301"/><rect x="16" y="7" width="3" height="12" fill="#f5b301"/><path d="M4 11l6-5 4 3 6-6M16 3h4v4" stroke="#fff"/></svg></span><b>Total Aktivitas<br>Follow-up</b><div class="num">${D.fu}</div></div></div>
  <table><thead><tr><th>Nama Marketing</th><th>Data Baru</th><th>New<br>Kontak</th><th>Update<br>Data</th><th>By Call</th><th>Email</th><th>WhatsApp</th><th>New<br>Lead</th><th style="width:30%">${REPM==='h'?'Keterangan':'Hari Aktif'}</th></tr></thead><tbody>${rows||'<tr><td colspan="9" class="blank">Belum ada anggota tim</td></tr>'}</tbody></table>
+ <div class="funnel"><h4>Funnel Lead — dari dihubungi sampai diserahkan ke sales</h4><table><thead><tr><th>Nama Marketing</th><th>Dihubungi<br><small>(customer)</small></th><th>Respon</th><th>Qualified</th><th>Diserahkan<br>ke Sales</th><th style="width:30%">Diserahkan Ke</th></tr></thead><tbody>
+ ${D.fun.map(f=>`<tr><td>${esc(f.nama)}</td>${['hub','res','qua','ser'].map(k=>`<td class="${f[k]?'nz':''}">${f[k]}</td>`).join('')}<td>${esc(f.ke||'—')}</td></tr>`).join('')||'<tr><td colspan="6" class="blank">Belum ada lead yang dihubungi / naik tahap di periode ini — isi tahap lewat tombol 🎯</td></tr>'}
+ ${D.fun.length>1?`<tr><td><b>Total</b></td>${['hub','res','qua','ser'].map(k=>`<td class="nz">${D.ft[k]}</td>`).join('')}<td></td></tr>`:''}</tbody></table></div>
  <div class="bottom"><svg class="ill" viewBox="0 0 210 150"><rect x="20" y="22" width="170" height="110" rx="10" fill="#1d4ed8"/><rect x="32" y="34" width="146" height="86" rx="4" fill="#fff"/>
   <rect x="58" y="88" width="16" height="26" fill="#1d4ed8"/><rect x="84" y="74" width="16" height="40" fill="#1d4ed8"/><rect x="110" y="62" width="16" height="52" fill="#1d4ed8"/><rect x="136" y="48" width="16" height="66" fill="#1d4ed8"/>
   <path d="M50 108L150 40" stroke="#f5b301" stroke-width="5"/><path d="M140 36l14 2-4 13z" fill="#f5b301"/><rect x="95" y="132" width="20" height="10" fill="#0b1f4d"/><rect x="75" y="142" width="60" height="6" rx="3" fill="#0b1f4d"/>
@@ -834,6 +876,8 @@ function copyRep(){
  let t=`*LAPORAN AKTIVITAS MARKETING ${perKata().toUpperCase()}*\n${perLabel()} — Laporan ke ${ke}\n\n`;
  t+=LK.map(([k,l])=>`${l}: ${D.tot[k]}`).join('\n')+`\n*Total Follow-up: ${D.fu}*\n\n`;
  t+=D.rows.map(x=>x.r?`• ${x.nama}: Update ${x.r.update}, Call ${x.r.call}, Email ${x.r.email}, WA ${x.r.wa}, Lead ${x.r.lead}, Data Baru ${x.r.baru}${x.r.ket?' — '+x.r.ket:''}`:`• ${x.nama}: (belum ada aktivitas)`).join('\n');
+ t+=`\n\n*Funnel Lead:* Dihubungi ${D.ft.hub} → Respon ${D.ft.res} → Qualified ${D.ft.qua} → Diserahkan ${D.ft.ser}`;
+ if(D.fun.length)t+='\n'+D.fun.map(f=>`• ${f.nama}: ${f.hub} → ${f.res} → ${f.qua} → ${f.ser}${f.ke?' (ke '+f.ke+')':''}`).join('\n');
  navigator.clipboard.writeText(t).then(()=>toast('✔ Teks laporan disalin — tinggal paste di WhatsApp'),()=>toast('Gagal menyalin'));
 }
 // ==== Performa bulanan ====
@@ -980,6 +1024,74 @@ async function hapusAkt(id){
   AKT=AKT.filter(a=>a.id!==id);toast('Aktivitas dihapus');if($('amod').classList.contains('show'))drawAhist();if(cur>=0)render();if(cur===-5||cur===-6||cur===-7)drawRep();
  }catch(e){toast('❌ '+e.message)}
 }
+// ==== Status lead & Pipeline ====
+function normC(x){return String(x||'').toLowerCase().replace(/\(.*?\)/g,' ').replace(/\b(pt|cv|pd|ud|tbk|co|ltd|inc|persero)\b\.?/g,' ').replace(/[^a-z0-9]+/g,' ').trim()}
+function leadOf(c){const n=normC(c);return n?LEAD.find(l=>l.id===n):null}
+const tslug=t=>t==='Tidak Cocok'?'tidak':String(t||'data').toLowerCase();
+function tpill(l){return l&&l.tahap?`<span class="tp t-${tslug(l.tahap)}" title="${esc(l.tahap+(l.ke?' → '+l.ke:''))}">${esc(l.tahap==='Diserahkan'&&l.ke?'→ '+l.ke:l.tahap)}</span>`:''}
+let LED=null;
+function bisaEdit(l){if(AUTH.role==='Admin')return true;if(!l)return true;return l.mkt.toLowerCase()===AUTH.u.toLowerCase()&&l.tahap!=='Diserahkan'}
+function openLead(k,id){
+ if(!AUTH.u){showLogin('Login dulu');return}
+ let l=null,src={sheet:'',baris:'',cust:''};
+ if(id!=null){l=LEAD.find(x=>x.id===id);src={sheet:l.sheet,baris:l.baris,cust:l.cust}}
+ else if(k!=null&&cur>=0){const s=DATA[cur];src={sheet:s.name,baris:s.ri?s.ri[k]+1:'',cust:custOf(s,k)};l=leadOf(src.cust)}
+ LED={src,l,tahap:l?l.tahap:''};
+ const free=!src.cust;
+ $('ldcustw').style.display=free?'':'none';$('ldcust').value='';
+ if(free){const cs=new Set();DATA.forEach(s=>{const c=custCol(s);if(c>=0&&/to do list/i.test(s.name))s.rows.forEach(r=>r[c]&&cs.add(r[c]))});$('acustdl').innerHTML=[...cs].slice(0,800).map(v=>`<option value="${esc(v)}">`).join('')}
+ const adm=AUTH.role==='Admin';$('ldmktw').style.display=adm?'':'none';
+ const ns=[...new Set([...(l?[l.mkt]:[]),AUTH.u,...timNames()])];$('ldmkt').innerHTML=ns.map(n=>`<option ${l&&l.mkt===n?'selected':''}>${esc(n)}</option>`).join('');
+ $('ldsub').innerHTML=free?'Pilih / ketik customer.':`<b>${esc(src.cust)}</b>${src.sheet?' · '+esc(pretty(src.sheet))+(src.baris?' baris '+src.baris:''):''}${l?' · dipegang <b>'+esc(l.mkt)+'</b>':''}`;
+ $('ldingot').value=l?l.ingot:'';$('ldalloy').value=l?l.alloy:'';$('ldvol').value=l?l.vol:'';$('ldsup').value=l?l.supplier:'';$('ldke').value=l?l.ke:'';$('ldcat').value=l?l.cat:'';
+ $('ldkedl').innerHTML=[...new Set([...SALEST,...LEAD.map(x=>x.ke).filter(Boolean)])].map(v=>`<option value="${esc(v)}">`).join('');
+ drawTsel();
+ const t=l?[['Dihubungi',l.tHub],['Respon',l.tRes],['Qualified',l.tQua],['Diserahkan',l.tSer]].filter(x=>x[1]).map(x=>x[0]+' '+x[1]).join(' · '):'';
+ $('ldtgl').textContent=l?(t?t+' · ':'')+'terakhir diubah '+l.upd+' oleh '+l.oleh:'Belum ada status untuk customer ini.';
+ const ed=bisaEdit(l);document.querySelectorAll('#ldmod input,#ldmod select').forEach(x=>x.disabled=!ed);$('ldsimpan').style.display=ed?'':'none';
+ $('ldmsg').className='msg';$('ldmsg').textContent=ed?'':(l.tahap==='Diserahkan'?'Lead sudah diserahkan ke '+l.ke+' — hanya admin yang bisa mengubah.':'Lead ini dipegang '+l.mkt+' — hanya bisa dilihat.');
+ $('ldmod').classList.add('show');
+}
+function drawTsel(){$('ldtahap').innerHTML=TAHAPL.map(t=>`<button type="button" class="ts${LED.tahap===t?" on":""}" data-t="${esc(t)}">${esc(t)}</button>`).join('');
+ $('ldtahap').querySelectorAll('button').forEach(b=>b.onclick=()=>{if(!bisaEdit(LED.l))return;LED.tahap=b.dataset.t;drawTsel()});
+ $('ldkew').style.opacity=LED.tahap==='Diserahkan'?1:.6}
+$('ldbatal').onclick=()=>$('ldmod').classList.remove('show');
+$('ldsimpan').onclick=async()=>{
+ const m=$('ldmsg'),cust=LED.src.cust||$('ldcust').value.trim();
+ if(!cust){m.className='msg err';m.textContent='Isi nama customer';return}
+ if(!LED.tahap){m.className='msg err';m.textContent='Pilih tahap';return}
+ if(LED.tahap==='Diserahkan'&&!$('ldke').value.trim()){m.className='msg err';m.textContent='Isi nama sales penerima';return}
+ const body={action:'lead_simpan',u:AUTH.u,p:AUTH.p,cust,sheet:LED.src.sheet,baris:LED.src.baris,tahap:LED.tahap,mkt:AUTH.role==='Admin'?$('ldmkt').value:'',
+  ingot:$('ldingot').value,alloy:$('ldalloy').value.trim(),vol:$('ldvol').value.trim(),supplier:$('ldsup').value.trim(),ke:$('ldke').value.trim(),cat:$('ldcat').value.trim()};
+ $('ldsimpan').disabled=true;m.className='msg';m.textContent='Menyimpan…';
+ try{const r=await post(getAPI(),JSON.stringify(body));if(r.auth===false){$('ldmod').classList.remove('show');logout(r.error);return}if(!r.ok)throw new Error(r.error||'Gagal');
+  const i=LEAD.findIndex(x=>x.id===r.lead.id);if(i>=0)LEAD[i]=r.lead;else LEAD.push(r.lead);
+  $('ldmod').classList.remove('show');toast('✔ Status lead '+r.lead.cust+': '+r.lead.tahap);buildSide();
+  if(cur>=0)render();else if(cur===-8)drawPipe();else if(cur===-5||cur===-6||cur===-7)drawRep();
+ }catch(e){m.className='msg err';m.textContent='❌ '+e.message}finally{$('ldsimpan').disabled=false}
+};
+const PP={t:'',m:'',q:''};
+function pipeView(){
+ $('crumb').textContent='Marketing → Sales';$('title').innerHTML='Pipeline Lead';$('q').style.display='none';$('csv').style.display='none';
+ const ms=[...new Set(LEAD.map(l=>l.mkt))].sort();
+ $('filters').innerHTML=`<label>Marketing<select id="ppm"><option value="">Semua</option>${ms.map(n=>`<option ${PP.m===n?'selected':''}>${esc(n)}</option>`).join('')}</select></label>
+ <label>Cari<input id="ppq" value="${esc(PP.q)}" placeholder="customer / alloy / sales"></label><button onclick="openLead(null,null)">＋ Status lead baru</button>`;
+ $('ppm').onchange=e=>{PP.m=e.target.value;drawPipe()};$('ppq').oninput=e=>{PP.q=e.target.value.toLowerCase();drawPipe()};
+ drawPipe();
+}
+function drawPipe(){
+ const base=LEAD.filter(l=>(!PP.m||l.mkt===PP.m)&&(!PP.q||[l.cust,l.alloy,l.ke,l.supplier,l.cat].join(' ').toLowerCase().includes(PP.q)));
+ const cnt=t=>base.filter(l=>l.tahap===t).length;
+ const list=base.filter(l=>!PP.t||l.tahap===PP.t).sort((a,b)=>TAHAPL.indexOf(b.tahap)-TAHAPL.indexOf(a.tahap)||(a.upd<b.upd?1:-1));
+ const ms=[...new Set(base.map(l=>l.mkt))].sort();
+ const per=ms.map(n=>{const r=base.filter(l=>l.mkt===n);return `<tr><td>${esc(n)}</td>${TAHAPL.map(t=>{const v=r.filter(l=>l.tahap===t).length;return `<td class="${v?'nz':''}">${v}</td>`}).join('')}<td><b>${r.length}</b></td></tr>`}).join('');
+ $('content').innerHTML=`<div class="pcards">${TAHAPL.map(t=>`<div class="pc ${PP.t===t?'on':''}" data-t="${esc(t)}"><span class="tp t-${tslug(t)}" style="margin:0">${esc(t)}</span><b>${cnt(t)}</b></div>`).join('')}</div>
+ <div class="box"><div class="sec" style="margin-top:0">Per marketing</div><div class="tw"><table class="rtab"><thead><tr><th>Marketing</th>${TAHAPL.map(t=>`<th>${esc(t)}</th>`).join('')}<th>Total</th></tr></thead><tbody>${per||'<tr><td colspan="8" class="blank">Belum ada status lead</td></tr>'}</tbody></table></div></div>
+ <div class="box"><div class="sec" style="margin-top:0">${PP.t?esc(PP.t):'Semua lead'} — ${list.length}${PP.t?' <a href="#" onclick="PP.t=\'\';drawPipe();return false" style="font-size:12px">(tampilkan semua)</a>':''}</div>
+ <div class="tw"><table class="rtab"><thead><tr><th>Customer</th><th>Tahap</th><th>Marketing</th><th>Pakai Ingot</th><th>Alloy</th><th>Volume/bln</th><th>Supplier Sekarang</th><th>Diserahkan Ke</th><th>Tgl Serah</th><th>Catatan</th><th>Update</th></tr></thead><tbody>
+ ${list.map(l=>`<tr style="cursor:pointer" onclick="openLead(null,${esc(JSON.stringify(l.id))})"><td><b>${esc(l.cust)}</b></td><td>${tpill(l)}</td><td>${esc(l.mkt)}</td><td>${esc(l.ingot)}</td><td>${esc(l.alloy)}</td><td>${esc(l.vol)}</td><td>${esc(l.supplier)}</td><td>${esc(l.ke)}</td><td>${esc(l.tSer)}</td><td>${esc(l.cat)}</td><td style="color:var(--mut);white-space:nowrap">${esc((l.upd||'').slice(0,16))}</td></tr>`).join('')||'<tr><td colspan="11" class="blank">Belum ada. Klik 🎯 di baris customer (di sheet mana pun) untuk mengisi tahap lead.</td></tr>'}</tbody></table></div></div>`;
+ $('content').querySelectorAll('.pc').forEach(c=>c.onclick=()=>{PP.t=PP.t===c.dataset.t?'':c.dataset.t;drawPipe()});
+}
 // ==== Kelola Tim (admin) ====
 let TEAM=null,TED=null;
 async function timApi(action,extra){const r=await post(getAPI(),JSON.stringify(Object.assign({action,u:AUTH.u,p:AUTH.p},extra||{})));
@@ -1090,7 +1202,7 @@ async function loadLive(keep){
   const nd=d.sheets.map(s=>processSheet(s.name,s.values,s.merges)).filter(Boolean);
   if(!nd.length)throw new Error('sheet kosong');
   const curName=cur>=0&&DATA[cur]?DATA[cur].name:null;
-  DATA=nd;_mdyG=null;LOG=Array.isArray(d.log)?d.log:[];LAP=Array.isArray(d.lap)?d.lap:[];AKT=Array.isArray(d.akt)?d.akt:[];TIMN=Array.isArray(d.tim)?d.tim:[];
+  DATA=nd;_mdyG=null;LOG=Array.isArray(d.log)?d.log:[];LAP=Array.isArray(d.lap)?d.lap:[];AKT=Array.isArray(d.akt)?d.akt:[];LEAD=Array.isArray(d.lead)?d.lead:[];if(Array.isArray(d.tahap))TAHAPL=d.tahap;SALEST=Array.isArray(d.salesTujuan)?d.salesTujuan:[];TIMN=Array.isArray(d.tim)?d.tim:[];
   const t=new Date(d.updated||Date.now());
   setStat('ok','Live · '+t.toLocaleTimeString('id',{hour:'2-digit',minute:'2-digit'})+' · auto 3 mnt');
   const ni=curName?DATA.findIndex(s=>s.name===curName):-1;
@@ -1101,7 +1213,7 @@ async function loadLive(keep){
    const sc=$('content').scrollTop;buildSide();
    if(cur>=0&&ni>=0){cur=ni;$('addbtn').style.display='';render()}
    else if(cur>=0){show(-1)}
-   else if(cur===-1)overview();else if(cur===-3)rLog();else if(cur===-5||cur===-6||cur===-7)drawRep();else if(cur===-2)gsearch();
+   else if(cur===-1)overview();else if(cur===-3)rLog();else if(cur===-5||cur===-6||cur===-7)drawRep();else if(cur===-8)drawPipe();else if(cur===-2)gsearch();
    $('content').scrollTop=sc;
    if(changed&&keep==='auto')toast('🔄 Ada data baru — tampilan diperbarui');
   }
