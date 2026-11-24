@@ -870,7 +870,7 @@ function lapView(m){
 function repData(){
  const names=timNames();
  AKT.forEach(a=>{if(inPer(a.tgl)&&!names.some(n=>n.toLowerCase()===a.nama.toLowerCase())&&!(AUTH.role==='Admin'&&a.nama.toLowerCase()===AUTH.u.toLowerCase()))names.push(a.nama)});
- if(AUTH.role==='Admin'&&AKT.some(a=>inPer(a.tgl)&&a.nama.toLowerCase()===AUTH.u.toLowerCase()))names.push(AUTH.u);
+ if(AUTH.role==='Admin'&&!names.some(n=>n.toLowerCase()===AUTH.u.toLowerCase())&&AKT.some(a=>inPer(a.tgl)&&a.nama.toLowerCase()===AUTH.u.toLowerCase()))names.push(AUTH.u);
  const rows=names.map(n=>{const l=REPM!=='h'?null:LAP.find(x=>x.tgl===lapTgl&&x.nama.toLowerCase()===n.toLowerCase());
   const ak=AKT.filter(a=>inPer(a.tgl)&&a.nama.toLowerCase()===n.toLowerCase());
   if(!l&&!ak.length)return {nama:n,r:null,ak};
