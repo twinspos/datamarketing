@@ -627,10 +627,7 @@ function buildSide(){
  const top=(id,ic,lbl,n,cls)=>`<div class="nav top ${cur===id?'on':''} ${cls||''}" data-k="${esc(lbl.toLowerCase())}" onclick="show(${id})"><span class="ic">${ic}</span><span class="lbl">${lbl}</span>${n?`<span class="n">${n}</span>`:''}</div>`;
  let h=`<div class="brand"><div><h1>Marketing Database</h1><div class="sub">${DATA.length} sheet · ${DATA.reduce((a,s)=>a+s.rows.length,0).toLocaleString('id')} baris data</div></div></div>
  <div class="sbar"></div><div class="sq">${SVG.search}<input id="sideq" placeholder="Cari menu / sheet…" value="${esc(SQ)}" autocomplete="off"></div>`;
- // to-do saya
- const mine=AUTH.u?DATA.findIndex(s=>new RegExp('^'+AUTH.u.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\s+to do list','i').test(s.name)):-1;
  h+=`<div class="slbl">Menu Utama</div>`;
- if(mine>=0)h+=`<div class="nav top ${cur===mine?'on':''} me" data-k="to-do saya ${esc(DATA[mine].name.toLowerCase())}" onclick="show(${mine})">${navIcon(DATA[mine].name)}<span class="lbl">To-do List Saya</span><span class="n">${DATA[mine].rows.length}</span></div>`;
  h+=top(-1,SVG.home,'Ringkasan')+top(-8,SVG.funnel,'Pipeline Lead',LEAD.length);
  h+=`<div class="slbl">Laporan</div>`+top(-5,SVG.cal,'Laporan Harian')+top(-7,SVG.cal,'Laporan Mingguan')+top(-6,SVG.cal,'Laporan Bulanan')+top(-9,SVG.chart,'Laporan Digital')+top(-10,SVG.chart,'Perbandingan');
  h+=`<div class="slbl">Lainnya</div>`+top(-3,SVG.clock,'Riwayat Update',LOG&&LOG.length)+(AUTH.role==='Admin'?top(-4,SVG.gear,'Kelola Tim'):'');
