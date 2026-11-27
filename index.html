@@ -621,7 +621,17 @@ function cell(v,hl){
  if(/^[\w.+-]+@[\w-]+\.[\w.-]+$/.test(v.trim())) return `<a href="mailto:${esc(v.trim())}">${t}</a>`;
  return `<div class="cl" onclick="this.classList.toggle('open')">${t}</div>`;
 }
-let SQ='';
+let SQ='',ARSIP_OPEN=false;const ARSIP_PIN='1234';
+function isTimSheet(s){const n=s.name.trim().toLowerCase();return TIMN.some(t=>n.indexOf(String(t).toLowerCase()+' to do list')===0)}
+function lockedSheet(i){return AUTH.role==='Admin'&&!ARSIP_OPEN&&DATA[i]&&!isTimSheet(DATA[i])}
+function bukaArsip(){
+ if(ARSIP_OPEN){ARSIP_OPEN=false;if(cur>=0&&lockedSheet(cur)){cur=-1;overview()}else if(cur===-1)overview();buildSide();toast('Data lainnya dikunci');return}
+ let m=$('pinmod');if(!m){m=document.createElement('div');m.id='pinmod';m.className='modal';document.body.appendChild(m)}
+ m.innerHTML=`<div class="mbox" style="max-width:360px"><h3 style="margin:0 0 6px">🔒 Data Lainnya</h3><div style="color:var(--mut);font-size:13.5px;margin-bottom:12px">Masukkan PIN untuk membuka sheet selain to-do list tim.</div><input id="pinin" type="password" inputmode="numeric" maxlength="8" placeholder="PIN" style="width:100%;font-size:20px;letter-spacing:6px;text-align:center;padding:10px"><div id="pinerr" style="color:#b42318;font-size:13px;min-height:18px;margin-top:6px"></div><div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px"><button class="ghost" onclick="$('pinmod').classList.remove('show')">Batal</button><button id="pinok">Buka</button></div></div>`;
+ m.classList.add('show');const i=$('pinin');setTimeout(()=>i.focus(),50);
+ const go=()=>{if(i.value===ARSIP_PIN){ARSIP_OPEN=true;m.classList.remove('show');buildSide();if(cur===-1)overview();toast('Data lainnya dibuka')}else{$('pinerr').textContent='PIN salah';i.value='';i.focus()}};
+ $('pinok').onclick=go;i.onkeydown=e=>{if(e.key==='Enter')go();if(e.key==='Escape')m.classList.remove('show')};
+}
 function buildSide(){
  const used=new Set();
  const top=(id,ic,lbl,n,cls)=>`<div class="nav top ${cur===id?'on':''} ${cls||''}" data-k="${esc(lbl.toLowerCase())}" onclick="show(${id})"><span class="ic">${ic}</span><span class="lbl">${lbl}</span>${n?`<span class="n">${n}</span>`:''}</div>`;
@@ -632,6 +642,12 @@ function buildSide(){
  h+=`<div class="slbl">Laporan</div>`+top(-5,SVG.cal,'Laporan Harian')+top(-7,SVG.cal,'Laporan Mingguan')+top(-6,SVG.cal,'Laporan Bulanan')+top(-9,SVG.chart,'Laporan Digital')+top(-10,SVG.chart,'Perbandingan');
  h+=`<div class="slbl">Lainnya</div>`+top(-3,SVG.clock,'Riwayat Update',LOG&&LOG.length)+(AUTH.role==='Admin'?top(-4,SVG.gear,'Kelola Tim'):'');
  h+=`<div class="slbl">Data</div>`;
+ if(AUTH.role==='Admin'){
+  DATA.forEach((s,i)=>{if(!isTimSheet(s))return;used.add(i);h+=`<div class="nav ${cur===i?'on':''}" data-k="${esc((s.name+' '+pretty(s.name)).toLowerCase())}" onclick="show(${i})" title="${esc(s.name)}">${navIcon(s.name)}<span class="lbl">${esc(pretty(s.name))}</span><span class="n">${s.rows.length}</span></div>`});
+  const nl=DATA.filter(s=>!isTimSheet(s)).length;
+  if(nl)h+=`<div class="nav top" data-k="data lainnya arsip kunci" onclick="bukaArsip()" title="${ARSIP_OPEN?'Klik untuk mengunci lagi':'Butuh PIN'}"><span class="ic">${ARSIP_OPEN?'🔓':'🔒'}</span><span class="lbl">Data Lainnya${ARSIP_OPEN?' · kunci':''}</span><span class="n">${nl}</span></div>`;
+  if(!ARSIP_OPEN)DATA.forEach((s,i)=>used.add(i));
+ }
  for(const [g,f] of GROUPS){
   const items=DATA.map((s,i)=>[s,i]).filter(([s,i])=>!used.has(i)&&f(s.name));
   if(!items.length) continue;
@@ -658,17 +674,18 @@ function filterSide(){
 function custCol(s){return s.cols.findIndex(c=>/^(cust|customer|nama perusahaan|perusahaan \/ organisasi|nama perusahaan \/ nama pada logo)$/i.test(c.trim()))}
 function colIdx(s,re){return s.cols.findIndex(c=>re.test(c.trim()))}
 function overview(){
+ const VD=DATA.filter((x,i)=>!lockedSheet(i));
  $('title').innerHTML='Ringkasan Database';$('filters').innerHTML='';$('q').style.display='none';$('csv').style.display='none';
- const total=DATA.reduce((a,s)=>a+s.rows.length,0);
- const custs=new Set();DATA.forEach(s=>{const c=custCol(s);if(c>=0)s.rows.forEach(r=>r[c]&&custs.add(r[c].toLowerCase().replace(/^pt\.?\s*/,'').trim()))});
- const todo=DATA.filter(s=>/to do list/i.test(s.name));
- const emails=new Set();DATA.forEach(s=>s.rows.forEach(r=>r.forEach(v=>{const m=v&&v.match(/[\w.+-]+@[\w-]+\.[\w.-]+/g);m&&m.forEach(e=>emails.add(e.toLowerCase()))})));
+ const total=VD.reduce((a,s)=>a+s.rows.length,0);
+ const custs=new Set();VD.forEach(s=>{const c=custCol(s);if(c>=0)s.rows.forEach(r=>r[c]&&custs.add(r[c].toLowerCase().replace(/^pt\.?\s*/,'').trim()))});
+ const todo=VD.filter(s=>/to do list/i.test(s.name));
+ const emails=new Set();VD.forEach(s=>s.rows.forEach(r=>r.forEach(v=>{const m=v&&v.match(/[\w.+-]+@[\w-]+\.[\w.-]+/g);m&&m.forEach(e=>emails.add(e.toLowerCase()))})));
  $('crumb').textContent='SWM · GAN';
  let h=`<div class="hero"><div class="hl">${emblem('swm')}${emblem('gan')}</div><h1>Marketing Database</h1>
  <p>PT Sumi Win Mukti &amp; Garuda Aluminium Nusantara — database customer, prospek &amp; aktivitas tim sales</p>
  <div class="chips"><span class="chip">📅 ${new Date().toLocaleDateString('id',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</span><span class="chip">${$('stxt').textContent}</span>${LOG&&LOG.length?`<span class="chip">🕘 ${LOG.length} riwayat update</span>`:''}</div></div>
  <div class="kpis">
- <div class="kpi"><div class="v">${DATA.length}</div><div class="l">Sheet</div></div>
+ <div class="kpi"><div class="v">${VD.length}</div><div class="l">Sheet</div></div>
  <div class="kpi"><div class="v">${total.toLocaleString('id')}</div><div class="l">Total baris data</div></div>
  <div class="kpi"><div class="v">${custs.size.toLocaleString('id')}</div><div class="l">Nama perusahaan unik (perkiraan)</div></div>
  <div class="kpi"><div class="v">${emails.size.toLocaleString('id')}</div><div class="l">Alamat email unik</div></div>
@@ -678,18 +695,19 @@ function overview(){
  h+=`<div class="two"><div class="box"><div class="sec" style="margin-top:0">Aktivitas To-do List per Sales</div><div class="bars">`+
  todo.map(s=>`<div class="row"><span class="lab">${esc(pretty(s.name))}</span><div class="bar" style="width:${s.rows.length/mx*60}%"></div><span class="num">${s.rows.length}</span></div>`).join('')+`</div></div>`;
  // segmentasi across INDONESIA-type sheets
- const seg={};DATA.filter(s=>/context|^INDONESIA|to do list/i.test(s.name)).forEach(s=>{const c=colIdx(s,/^produk$/i),cu=custCol(s);if(c<0)return;s.rows.forEach(r=>{if(cu>=0&&!r[cu])return;const k=(r[c]||'(kosong)').toUpperCase().trim();if(k==='PRODUK')return;seg[k]=(seg[k]||0)+1})});
+ const seg={};VD.filter(s=>/context|^INDONESIA|to do list/i.test(s.name)).forEach(s=>{const c=colIdx(s,/^produk$/i),cu=custCol(s);if(c<0)return;s.rows.forEach(r=>{if(cu>=0&&!r[cu])return;const k=(r[c]||'(kosong)').toUpperCase().trim();if(k==='PRODUK')return;seg[k]=(seg[k]||0)+1})});
  const top=Object.entries(seg).sort((a,b)=>b[1]-a[1]).slice(0,12),m2=top.length?top[0][1]:1;
  h+=`<div class="box"><div class="sec" style="margin-top:0">Customer per Produk (top 12)</div><div class="bars">`+
  top.map(([k,v])=>`<div class="row"><span class="lab" title="${esc(k)}">${esc(k)}</span><div class="bar" style="width:${v/m2*60}%"></div><span class="num">${v}</span></div>`).join('')+`</div></div></div>`;
  for(const [g,f] of GROUPS){
-  const items=DATA.map((s,i)=>[s,i]).filter(([s])=>GROUPS.find(([,ff])=>ff(s.name))[0]===g);
+  const items=DATA.map((s,i)=>[s,i]).filter(([s,i])=>!lockedSheet(i)&&GROUPS.find(([,ff])=>ff(s.name))[0]===g);
   if(!items.length)continue;
   h+=`<div class="sec">${g}</div><div class="cards">`+items.map(([s,i])=>`<div class="card" onclick="show(${i})">${navIcon(s.name)}<div><b>${esc(pretty(s.name))}</b><span>${s.rows.length} baris · ${s.cols.length} kolom${s.note?' · '+esc(s.note.replace(/^last updated/i,'update'))+'':''}</span></div></div>`).join('')+`</div>`;
  }
  $('content').innerHTML=h;drawPerf();
 }
 function show(i){
+ if(i>=0&&lockedSheet(i)){bukaArsip();return}
  cur=i;sortC=-1;fil={};$('q').value='';$('q').placeholder='Cari di sheet ini…';lf.q='';$('gq').value='';$('side').classList.remove('show');
  buildSide();$('q').style.display='';$('csv').style.display='';
  $('addbtn').style.display=(i>=0&&DATA[i]&&DATA[i].ri)?'':'none';
@@ -741,7 +759,7 @@ function gsearch(){
  const ql=q.toLowerCase();cur=-2;buildSide();
  $('crumb').textContent='Pencarian';$('title').innerHTML=`Hasil cari semua sheet: “${esc(q)}”`;$('filters').innerHTML='';$('q').style.display='none';$('csv').style.display='none';
  let h='<div class="gres">',tot=0;
- DATA.forEach((s,i)=>{const m=s.rows.filter(r=>r.some(v=>v&&v.toLowerCase().includes(ql)));if(!m.length)return;tot+=m.length;
+ DATA.forEach((s,i)=>{if(lockedSheet(i))return;const m=s.rows.filter(r=>r.some(v=>v&&v.toLowerCase().includes(ql)));if(!m.length)return;tot+=m.length;
   h+=`<h4><a href="#" onclick="show(${i});$('q').value=${esc(JSON.stringify(q))};render();return false">${esc(pretty(s.name))}</a> <span class="tag">${m.length}</span></h4><div class="tw" style="max-height:320px"><table><thead><tr>${s.cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>`+
   m.slice(0,50).map(r=>'<tr>'+r.map(v=>`<td>${cell(v,q)}</td>`).join('')+'</tr>').join('')+'</tbody></table></div>'});
  $('content').innerHTML=(tot?`<div class="meta">${tot} baris cocok</div>`:'<div class="meta">Tidak ada hasil.</div>')+h+'</div>';
@@ -842,7 +860,7 @@ const perKata=()=>({h:'Harian',m:'Mingguan',b:'Bulanan'})[REPM];
 const perKini=()=>({h:'hari ini',m:'minggu ini',b:'bulan ini'})[REPM];
 function timNames(){
  const s=new Set(TIMN.filter(n=>n.toLowerCase()!==(AUTH.role==='Admin'?AUTH.u.toLowerCase():'')));
- DATA.forEach(x=>{const m=x.name.match(/^(\S+)\s+to do list/i);if(m&&![...s].some(n=>n.toLowerCase()===m[1].toLowerCase()))s.add(m[1].charAt(0).toUpperCase()+m[1].slice(1))});
+ DATA.forEach((x,i)=>{if(lockedSheet(i))return;const m=x.name.match(/^(\S+)\s+to do list/i);if(m&&![...s].some(n=>n.toLowerCase()===m[1].toLowerCase()))s.add(m[1].charAt(0).toUpperCase()+m[1].slice(1))});
  LAP.forEach(r=>{if(![...s].some(n=>n.toLowerCase()===r.nama.toLowerCase()))s.add(r.nama)});
  return [...s].sort((a,b)=>a.localeCompare(b));
 }
@@ -989,7 +1007,7 @@ const PM=[['todo','Customer di to-do list'],['fu','Total follow-up (Call+Email+W
 let PF={metric:'',from:'',to:'',a:'',b:'',view:'tabel'};
 function salesList(){
  const s=new Set();
- DATA.forEach(x=>{const m=x.name.match(/^(\S+)\s+to do list/i);if(m)s.add(m[1].charAt(0).toUpperCase()+m[1].slice(1).toLowerCase())});
+ DATA.forEach((x,i)=>{if(lockedSheet(i))return;const m=x.name.match(/^(\S+)\s+to do list/i);if(m)s.add(m[1].charAt(0).toUpperCase()+m[1].slice(1).toLowerCase())});
  TIMN.forEach(n=>{if(![...s].some(x=>x.toLowerCase()===n.toLowerCase()))s.add(n)});
  AKT.forEach(a=>{if(![...s].some(x=>x.toLowerCase()===a.nama.toLowerCase())&&!(a.nama.toLowerCase()===AUTH.u.toLowerCase()&&AUTH.role==='Admin'))s.add(a.nama)});
  return [...s];
